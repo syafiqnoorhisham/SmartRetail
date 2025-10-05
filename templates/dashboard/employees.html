@@ -239,7 +239,15 @@
             </div>
             
             <div class="modal-footer">
-                <button type="submit" class="btn-add-employee">Add Employee</button>
+                <button type="submit" class="btn-add-employee" id="btnSubmitEmployee">
+                    <span class="btn-text">Add Employee</span>
+                    <span class="btn-loader" style="display: none;">
+                        <svg class="spinner" viewBox="0 0 50 50">
+                            <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
+                        </svg>
+                        Sending invitation email...
+                    </span>
+                </button>
             </div>
         </form>
     </div>
@@ -877,6 +885,86 @@
 .btn-update-employee:hover {
     background: #00A843;
 }
+
+/* Loading Spinner */
+.btn-add-employee,
+.btn-update-employee {
+    position: relative;
+}
+
+.btn-add-employee:disabled,
+.btn-update-employee:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.btn-loader {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: center;
+}
+
+.spinner {
+    width: 20px;
+    height: 20px;
+    animation: rotate 2s linear infinite;
+}
+
+.spinner .path {
+    stroke: white;
+    stroke-linecap: round;
+    animation: dash 1.5s ease-in-out infinite;
+}
+
+@keyframes rotate {
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes dash {
+    0% {
+        stroke-dasharray: 1, 150;
+        stroke-dashoffset: 0;
+    }
+    50% {
+        stroke-dasharray: 90, 150;
+        stroke-dashoffset: -35;
+    }
+    100% {
+        stroke-dasharray: 90, 150;
+        stroke-dashoffset: -124;
+    }
+}
+
+/* Success message */
+.success-message {
+    background: #4caf50;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 6px;
+    margin-bottom: 16px;
+    display: none;
+    align-items: center;
+    gap: 10px;
+    animation: slideDown 0.3s ease;
+}
+
+.success-message.show {
+    display: flex;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
 </style>
 {% endblock %}
 
@@ -974,6 +1062,9 @@ employeeForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     
     const formData = new FormData(employeeForm);
+    const submitBtn = document.getElementById('btnSubmitEmployee');
+    const btnText = submitBtn.querySelector('.btn-text');
+    const btnLoader = submitBtn.querySelector('.btn-loader');
     
     // Validate email format
     const email = formData.get('email');
@@ -982,6 +1073,11 @@ employeeForm?.addEventListener('submit', async (e) => {
         alert('Please enter a valid email address');
         return;
     }
+    
+    // Show loading state
+    submitBtn.disabled = true;
+    btnText.style.display = 'none';
+    btnLoader.style.display = 'flex';
     
     try {
         const response = await fetch('/api/employee/add/', {
@@ -992,15 +1088,41 @@ employeeForm?.addEventListener('submit', async (e) => {
         const data = await response.json();
         
         if (data.success) {
-            alert(`Employee added successfully!\nEmployee ID: ${data.employee_id}\nName: ${data.name}`);
+            // Show success message with email status
+            let message = `✅ Employee added successfully!\n\n`;
+            message += `Employee ID: ${data.employee_id}\n`;
+            message += `Name: ${data.name}\n\n`;
+            
+            if (data.email_status === 'sending') {
+                message += `📧 Invitation email is being sent to ${email}\n`;
+                message += `The employee will receive it shortly.`;
+            } else if (data.email_sent) {
+                message += `✅ Invitation email sent to ${email}`;
+            } else {
+                message += `⚠️ Employee added but email may not have been sent.`;
+            }
+            
+            alert(message);
             closeModal();
-            window.location.reload();
+            
+            // Reload after short delay to allow background email to complete
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
         } else {
             alert('Error: ' + (data.error || 'Failed to add employee'));
+            // Reset button state
+            submitBtn.disabled = false;
+            btnText.style.display = 'inline';
+            btnLoader.style.display = 'none';
         }
     } catch (error) {
         console.error('Error:', error);
-        alert('An error occurred while adding employee');
+        alert('An error occurred while adding employee. Please try again.');
+        // Reset button state
+        submitBtn.disabled = false;
+        btnText.style.display = 'inline';
+        btnLoader.style.display = 'none';
     }
 });
 

@@ -15,7 +15,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 from django.conf import settings
 from .supabase_client import get_supabase_client, get_supabase_admin_client
-from .utils.email_utils import send_employee_invitation
+from .utils.email_utils import send_employee_invitation, send_invitation_async
+import threading
 
 logger = logging.getLogger(__name__)
 
@@ -285,22 +286,40 @@ def api_add_employee_with_invitation(request):
         
         result = client.table('employees').insert(employee_data).execute()
         
-        # Send invitation email
-        email_sent = send_employee_invitation({
-            'name': name,
-            'email': email,
-            'employee_id': employee_id,
-            'role': role
-        }, invitation_token)
+        logger.info(f"✅ Employee record created: {employee_id} - {name}")
         
-        logger.info(f"Employee added with invitation: {employee_id} - {name}, Email sent: {email_sent}")
+        # Send invitation email in background thread (async)
+        def send_email_background():
+            try:
+                logger.info(f"📧 [BACKGROUND] Starting email send for {email}")
+                email_sent = send_invitation_async({
+                    'name': name,
+                    'email': email,
+                    'employee_id': employee_id,
+                    'role': role
+                }, invitation_token)
+                
+                if email_sent:
+                    logger.info(f"✅ [BACKGROUND] Email sent successfully to {email}")
+                else:
+                    logger.warning(f"⚠️ [BACKGROUND] Email failed for {email}")
+            except Exception as e:
+                logger.error(f"❌ [BACKGROUND] Email error for {email}: {str(e)}")
         
+        # Start background thread for email sending
+        email_thread = threading.Thread(target=send_email_background)
+        email_thread.daemon = True  # Thread will terminate when main program exits
+        email_thread.start()
+        
+        logger.info(f"📤 Email thread started for {email}")
+        
+        # Return immediately without waiting for email
         return JsonResponse({
             'success': True,
-            'message': f'Employee added successfully! Invitation email sent to {email}',
+            'message': f'Employee added successfully! Invitation email is being sent to {email}',
             'employee_id': employee_id,
             'name': name,
-            'email_sent': email_sent
+            'email_status': 'sending'
         })
         
     except Exception as e:
