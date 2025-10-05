@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - SmartRetail{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h1>Login Success</h1>
+        <a href="{% url 'logout' %}" class="logout-btn">Logout</a>
+    </div>
+    
+    <div class="dashboard-content">
+        <h2>This is Dashboard</h2>
+        <p>Welcome, {{ user_email }}!</p>
+    </div>
+</div>
+{% endblock %}

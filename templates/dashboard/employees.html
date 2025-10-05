@@ -1,0 +1,1236 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}Employees - SmartRetail{% endblock %}
+{% block page_title %}EMPLOYEES{% endblock %}
+
+{% block content %}
+<!-- Action Bar -->
+<div class="action-bar">
+    <button class="btn-new-employee" id="btnNewEmployee">
+        <span class="plus-icon">+</span> Add Employee
+    </button>
+</div>
+
+<!-- Role Filter Tabs -->
+<div class="role-tabs">
+    <!-- All Tab -->
+    <a href="/employees/" 
+       class="role-tab {% if not selected_role %}active{% endif %}">
+        All <span class="tab-count">({{ total_employees }})</span>
+    </a>
+    
+    <!-- Role Tabs -->
+    <a href="?role=Manager" 
+       class="role-tab {% if selected_role == 'Manager' %}active{% endif %}">
+        Manager <span class="tab-count">({{ role_counts.Manager|default:0 }})</span>
+    </a>
+    <a href="?role=Supplier" 
+       class="role-tab {% if selected_role == 'Supplier' %}active{% endif %}">
+        Supplier <span class="tab-count">({{ role_counts.Supplier|default:0 }})</span>
+    </a>
+    <a href="?role=Sales" 
+       class="role-tab {% if selected_role == 'Sales' %}active{% endif %}">
+        Sales <span class="tab-count">({{ role_counts.Sales|default:0 }})</span>
+    </a>
+</div>
+
+<!-- Employees Section -->
+<div class="employees-section">
+    <div class="section-header">
+        <h3 class="section-title">
+            {% if selected_role %}
+                {{ selected_role }} Employees
+            {% elif search_query %}
+                Search Results
+            {% else %}
+                All Employees
+            {% endif %}
+        </h3>
+        <span class="employee-count">{{ employees|length }} employee{{ employees|length|pluralize }}</span>
+    </div>
+    
+    <!-- Search Bar -->
+    <div class="search-container">
+        <form method="GET" class="search-form" id="searchForm">
+            <div class="search-input-wrapper">
+                <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.35-4.35"></path>
+                </svg>
+                <input type="text" 
+                       name="search" 
+                       class="search-input" 
+                       placeholder="Search by name, email, or employee ID..." 
+                       value="{{ search_query }}"
+                       autocomplete="off">
+                {% if search_query %}
+                <button type="button" class="clear-search" id="clearSearch">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+                {% endif %}
+            </div>
+            {% if selected_role %}
+            <input type="hidden" name="role" value="{{ selected_role }}">
+            {% endif %}
+        </form>
+    </div>
+    
+    <!-- Employees Table -->
+    <div class="table-container">
+        <table class="employees-table">
+            <thead>
+                <tr>
+                    <th><input type="checkbox" id="selectAll"></th>
+                    <th>Profile</th>
+                    <th>Employee ID</th>
+                    <th>Full Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Address</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for employee in employees %}
+                <tr>
+                    <td><input type="checkbox" class="employee-checkbox" data-id="{{ employee.id }}"></td>
+                    <td class="profile-cell">
+                        {% if employee.profile_picture %}
+                        <img src="{{ employee.profile_picture }}" alt="{{ employee.name }}" class="profile-picture">
+                        {% else %}
+                        <div class="profile-placeholder">
+                            {{ employee.name|slice:":1"|upper }}
+                        </div>
+                        {% endif %}
+                    </td>
+                    <td class="employee-id">{{ employee.employee_id }}</td>
+                    <td class="employee-name">{{ employee.name }}</td>
+                    <td class="employee-email">{{ employee.email|default:"—" }}</td>
+                    <td>
+                        <span class="role-badge {{ employee.role|lower }}">
+                            {{ employee.role }}
+                        </span>
+                    </td>
+                    <td class="employee-address">{{ employee.address|default:"—"|truncatewords:5 }}</td>
+                    <td class="actions">
+                        <button class="btn-edit-employee" 
+                                data-id="{{ employee.id }}"
+                                data-employee-id="{{ employee.employee_id }}"
+                                data-name="{{ employee.name }}"
+                                data-email="{{ employee.email }}"
+                                data-role="{{ employee.role }}"
+                                data-address="{{ employee.address }}"
+                                data-profile="{{ employee.profile_picture }}"
+                                title="Edit Employee">✏️</button>
+                        <button class="btn-delete-employee" 
+                                data-id="{{ employee.id }}"
+                                data-employee-id="{{ employee.employee_id }}"
+                                data-name="{{ employee.name }}"
+                                title="Delete Employee">🗑️</button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="no-data">
+                        {% if search_query %}
+                            <div class="no-results">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <path d="m21 21-4.35-4.35"></path>
+                                </svg>
+                                <p>No employees found matching "<strong>{{ search_query }}</strong>"</p>
+                                <button type="button" class="btn-clear-search" onclick="document.getElementById('clearSearch').click()">Clear search</button>
+                            </div>
+                        {% elif selected_role %}
+                            <div class="no-results">
+                                <p>No {{ selected_role }} employees found</p>
+                            </div>
+                        {% else %}
+                            <div class="no-results">
+                                <p>No employees available</p>
+                                <button type="button" class="btn-add-first" onclick="document.getElementById('btnNewEmployee').click()">Add your first employee</button>
+                            </div>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Add Employee Modal -->
+<div class="modal" id="addEmployeeModal">
+    <div class="modal-overlay" id="modalOverlay"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>ADD EMPLOYEE</h3>
+            <button class="modal-close" id="modalClose">&times;</button>
+        </div>
+        
+        <form class="employee-form" id="employeeForm" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <!-- Profile Picture Upload -->
+            <div class="form-group profile-upload-group">
+                <label>PROFILE PICTURE (Optional)</label>
+                <div class="profile-upload-area" id="profileUploadArea">
+                    <div class="upload-placeholder" id="uploadPlaceholder">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        <p>Click to upload or drag and drop</p>
+                        <span class="upload-hint">PNG, JPG (Max 2MB)</span>
+                    </div>
+                    <img id="profilePreview" class="profile-preview" style="display: none;">
+                    <input type="file" 
+                           id="profilePicture" 
+                           name="profile_picture" 
+                           accept="image/png, image/jpeg, image/jpg"
+                           style="display: none;">
+                    <button type="button" class="btn-remove-image" id="btnRemoveImage" style="display: none;">Remove</button>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="employeeName">FULL NAME <span class="required">*</span></label>
+                <input type="text" 
+                       id="employeeName" 
+                       name="name" 
+                       class="form-input" 
+                       placeholder="Enter full name"
+                       required>
+            </div>
+            
+            <div class="form-group">
+                <label for="employeeEmail">EMAIL <span class="required">*</span></label>
+                <input type="email" 
+                       id="employeeEmail" 
+                       name="email" 
+                       class="form-input" 
+                       placeholder="employee@example.com"
+                       required>
+                <span class="input-hint">This email must be unique</span>
+            </div>
+            
+            <div class="form-group">
+                <label for="employeeRole">ROLE <span class="required">*</span></label>
+                <select id="employeeRole" name="role" class="form-select" required>
+                    <option value="">Select role</option>
+                    <option value="Manager">Manager</option>
+                    <option value="Supplier">Supplier</option>
+                    <option value="Sales">Sales</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="employeeAddress">ADDRESS (Optional)</label>
+                <textarea id="employeeAddress" 
+                          name="address" 
+                          class="form-textarea" 
+                          placeholder="Enter address"
+                          rows="3"></textarea>
+            </div>
+            
+            <div class="modal-footer">
+                <button type="submit" class="btn-add-employee">Add Employee</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Employee Modal -->
+<div class="modal" id="editEmployeeModal">
+    <div class="modal-overlay" id="editModalOverlay"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>EDIT EMPLOYEE</h3>
+            <button class="modal-close" id="editModalClose">&times;</button>
+        </div>
+        
+        <form class="employee-form" id="editEmployeeForm" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="hidden" id="editEmployeeDbId" name="id">
+            
+            <div class="form-group">
+                <label for="editEmployeeId">EMPLOYEE ID</label>
+                <input type="text" 
+                       id="editEmployeeId" 
+                       class="form-input" 
+                       readonly>
+            </div>
+            
+            <!-- Profile Picture Upload -->
+            <div class="form-group profile-upload-group">
+                <label>PROFILE PICTURE (Optional)</label>
+                <div class="profile-upload-area" id="editProfileUploadArea">
+                    <div class="upload-placeholder" id="editUploadPlaceholder">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        <p>Click to upload or drag and drop</p>
+                        <span class="upload-hint">PNG, JPG (Max 2MB)</span>
+                    </div>
+                    <img id="editProfilePreview" class="profile-preview" style="display: none;">
+                    <input type="file" 
+                           id="editProfilePicture" 
+                           name="profile_picture" 
+                           accept="image/png, image/jpeg, image/jpg"
+                           style="display: none;">
+                    <button type="button" class="btn-remove-image" id="btnEditRemoveImage" style="display: none;">Remove</button>
+                </div>
+                <input type="hidden" id="currentProfilePicture" name="current_profile_picture">
+            </div>
+            
+            <div class="form-group">
+                <label for="editEmployeeName">FULL NAME <span class="required">*</span></label>
+                <input type="text" 
+                       id="editEmployeeName" 
+                       name="name" 
+                       class="form-input" 
+                       required>
+            </div>
+            
+            <div class="form-group">
+                <label for="editEmployeeEmail">EMAIL <span class="required">*</span></label>
+                <input type="email" 
+                       id="editEmployeeEmail" 
+                       name="email" 
+                       class="form-input" 
+                       required>
+            </div>
+            
+            <div class="form-group">
+                <label for="editEmployeeRole">ROLE <span class="required">*</span></label>
+                <select id="editEmployeeRole" name="role" class="form-select" required>
+                    <option value="Manager">Manager</option>
+                    <option value="Supplier">Supplier</option>
+                    <option value="Sales">Sales</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="editEmployeeAddress">ADDRESS (Optional)</label>
+                <textarea id="editEmployeeAddress" 
+                          name="address" 
+                          class="form-textarea" 
+                          rows="3"></textarea>
+            </div>
+            
+            <div class="modal-footer">
+                <button type="submit" class="btn-update-employee">Update Employee</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Action Bar */
+.action-bar {
+    margin-bottom: 20px;
+}
+
+.btn-new-employee {
+    background: #2196F3;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.3s ease;
+}
+
+.btn-new-employee:hover {
+    background: #1976D2;
+}
+
+.plus-icon {
+    font-size: 18px;
+    font-weight: 700;
+}
+
+/* Role Tabs */
+.role-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+}
+
+.role-tab {
+    background: #FFC107;
+    color: #000;
+    padding: 10px 20px;
+    border-radius: 20px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.role-tab:hover {
+    background: #FFB300;
+    transform: translateY(-2px);
+}
+
+.role-tab.active {
+    background: #FF9800;
+    color: white;
+    box-shadow: 0 4px 8px rgba(255, 152, 0, 0.3);
+}
+
+.tab-count {
+    background: rgba(0, 0, 0, 0.1);
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 12px;
+}
+
+.role-tab.active .tab-count {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Section Header */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.section-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #2196F3;
+}
+
+.employee-count {
+    font-size: 14px;
+    color: #666;
+    background: #f5f5f5;
+    padding: 4px 12px;
+    border-radius: 12px;
+}
+
+/* Search Container */
+.search-container {
+    margin-bottom: 20px;
+}
+
+.search-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-icon {
+    position: absolute;
+    left: 14px;
+    color: #999;
+    pointer-events: none;
+}
+
+.search-input {
+    width: 100%;
+    padding: 10px 14px 10px 44px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: border-color 0.3s ease;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #2196F3;
+}
+
+.clear-search {
+    position: absolute;
+    right: 10px;
+    background: #f5f5f5;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #666;
+    transition: all 0.3s ease;
+}
+
+.clear-search:hover {
+    background: #e0e0e0;
+    color: #333;
+}
+
+/* Table Container */
+.table-container {
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.employees-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.employees-table thead {
+    background: #f8f9fa;
+}
+
+.employees-table th {
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 600;
+    color: #666;
+    text-transform: uppercase;
+    border-bottom: 2px solid #e0e0e0;
+}
+
+.employees-table tbody tr {
+    border-bottom: 1px solid #f0f0f0;
+    transition: background 0.2s ease;
+}
+
+.employees-table tbody tr:hover {
+    background: #f8f9fa;
+}
+
+.employees-table td {
+    padding: 12px 16px;
+    font-size: 14px;
+    color: #333;
+}
+
+/* Profile Cell */
+.profile-cell {
+    width: 60px;
+}
+
+.profile-picture {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #e0e0e0;
+}
+
+.profile-placeholder {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.employee-id {
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    color: #2196F3;
+}
+
+.employee-name {
+    font-weight: 500;
+}
+
+.employee-email {
+    color: #666;
+}
+
+.employee-address {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Role Badge */
+.role-badge {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    display: inline-block;
+}
+
+.role-badge.manager {
+    background: #E8F5E9;
+    color: #2E7D32;
+}
+
+.role-badge.supplier {
+    background: #FFF3E0;
+    color: #E65100;
+}
+
+.role-badge.sales {
+    background: #E3F2FD;
+    color: #1565C0;
+}
+
+/* Actions */
+.actions {
+    text-align: center;
+}
+
+.btn-edit-employee,
+.btn-delete-employee {
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px 8px;
+    opacity: 0.6;
+    transition: all 0.3s;
+}
+
+.btn-edit-employee:hover,
+.btn-delete-employee:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+/* No Results */
+.no-results {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.no-results svg {
+    color: #ccc;
+    margin-bottom: 16px;
+}
+
+.no-results p {
+    color: #666;
+    font-size: 16px;
+    margin-bottom: 16px;
+}
+
+.btn-clear-search,
+.btn-add-first {
+    background: #2196F3;
+    color: white;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.btn-clear-search:hover,
+.btn-add-first:hover {
+    background: #1976D2;
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal.active {
+    display: flex;
+}
+
+.modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+    position: relative;
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 550px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    z-index: 1001;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid #eee;
+}
+
+.modal-header h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 28px;
+    color: #999;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-close:hover {
+    color: #333;
+}
+
+.employee-form {
+    padding: 24px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #666;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+}
+
+.required {
+    color: #f44336;
+}
+
+.form-input,
+.form-select,
+.form-textarea {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    color: #333;
+    transition: border-color 0.3s ease;
+    font-family: inherit;
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+    outline: none;
+    border-color: #2196F3;
+}
+
+.form-input:read-only {
+    background-color: #f5f5f5;
+    color: #999;
+    cursor: not-allowed;
+}
+
+.form-textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.input-hint {
+    display: block;
+    margin-top: 4px;
+    font-size: 11px;
+    color: #999;
+}
+
+/* Profile Upload */
+.profile-upload-group {
+    margin-bottom: 24px;
+}
+
+.profile-upload-area {
+    position: relative;
+    border: 2px dashed #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.profile-upload-area:hover {
+    border-color: #2196F3;
+    background: #f8f9fa;
+}
+
+.profile-upload-area.has-image {
+    border-style: solid;
+    border-color: #2196F3;
+}
+
+.upload-placeholder svg {
+    color: #999;
+    margin-bottom: 8px;
+}
+
+.upload-placeholder p {
+    margin: 0 0 4px 0;
+    font-size: 14px;
+    color: #333;
+}
+
+.upload-hint {
+    font-size: 12px;
+    color: #999;
+}
+
+.profile-preview {
+    max-width: 200px;
+    max-height: 200px;
+    border-radius: 8px;
+    object-fit: cover;
+    margin: 0 auto;
+}
+
+.btn-remove-image {
+    margin-top: 10px;
+    background: #f44336;
+    color: white;
+    border: none;
+    padding: 6px 16px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.btn-remove-image:hover {
+    background: #d32f2f;
+}
+
+.modal-footer {
+    padding-top: 10px;
+}
+
+.btn-add-employee,
+.btn-update-employee {
+    width: 100%;
+    padding: 12px;
+    background: #2196F3;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.btn-add-employee:hover,
+.btn-update-employee:hover {
+    background: #1976D2;
+}
+
+.btn-update-employee {
+    background: #00C853;
+}
+
+.btn-update-employee:hover {
+    background: #00A843;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Modal functionality - Add Employee
+const modal = document.getElementById('addEmployeeModal');
+const btnNewEmployee = document.getElementById('btnNewEmployee');
+const modalClose = document.getElementById('modalClose');
+const modalOverlay = document.getElementById('modalOverlay');
+const employeeForm = document.getElementById('employeeForm');
+
+// Profile picture handling - Add Modal
+const profileUploadArea = document.getElementById('profileUploadArea');
+const uploadPlaceholder = document.getElementById('uploadPlaceholder');
+const profilePreview = document.getElementById('profilePreview');
+const profilePictureInput = document.getElementById('profilePicture');
+const btnRemoveImage = document.getElementById('btnRemoveImage');
+
+let selectedFile = null;
+
+// Open modal
+btnNewEmployee?.addEventListener('click', () => {
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    resetForm();
+});
+
+// Close modal
+function closeModal() {
+    modal.classList.remove('active');
+    document.body.style.overflow = '';
+    resetForm();
+}
+
+function resetForm() {
+    employeeForm.reset();
+    clearProfileImage();
+}
+
+function clearProfileImage() {
+    selectedFile = null;
+    profilePictureInput.value = '';
+    profilePreview.style.display = 'none';
+    uploadPlaceholder.style.display = 'block';
+    btnRemoveImage.style.display = 'none';
+    profileUploadArea.classList.remove('has-image');
+}
+
+modalClose?.addEventListener('click', closeModal);
+modalOverlay?.addEventListener('click', closeModal);
+
+// Profile picture upload
+profileUploadArea?.addEventListener('click', () => {
+    profilePictureInput.click();
+});
+
+profilePictureInput?.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        // Validate file size (2MB)
+        if (file.size > 2 * 1024 * 1024) {
+            alert('File size must be less than 2MB');
+            return;
+        }
+        
+        // Validate file type
+        if (!file.type.match('image/(png|jpeg|jpg)')) {
+            alert('Only PNG and JPG files are allowed');
+            return;
+        }
+        
+        selectedFile = file;
+        
+        // Preview image
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            profilePreview.src = e.target.result;
+            profilePreview.style.display = 'block';
+            uploadPlaceholder.style.display = 'none';
+            btnRemoveImage.style.display = 'inline-block';
+            profileUploadArea.classList.add('has-image');
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+btnRemoveImage?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    clearProfileImage();
+});
+
+// Handle form submission
+employeeForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const formData = new FormData(employeeForm);
+    
+    // Validate email format
+    const email = formData.get('email');
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        alert('Please enter a valid email address');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/employee/add/', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert(`Employee added successfully!\nEmployee ID: ${data.employee_id}\nName: ${data.name}`);
+            closeModal();
+            window.location.reload();
+        } else {
+            alert('Error: ' + (data.error || 'Failed to add employee'));
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('An error occurred while adding employee');
+    }
+});
+
+// Edit Employee Modal
+const editModal = document.getElementById('editEmployeeModal');
+const editModalClose = document.getElementById('editModalClose');
+const editModalOverlay = document.getElementById('editModalOverlay');
+const editEmployeeForm = document.getElementById('editEmployeeForm');
+
+// Profile picture handling - Edit Modal
+const editProfileUploadArea = document.getElementById('editProfileUploadArea');
+const editUploadPlaceholder = document.getElementById('editUploadPlaceholder');
+const editProfilePreview = document.getElementById('editProfilePreview');
+const editProfilePictureInput = document.getElementById('editProfilePicture');
+const btnEditRemoveImage = document.getElementById('btnEditRemoveImage');
+const currentProfilePicture = document.getElementById('currentProfilePicture');
+
+let editSelectedFile = null;
+
+// Open edit modal
+function openEditModal(employeeData) {
+    document.getElementById('editEmployeeDbId').value = employeeData.id;
+    document.getElementById('editEmployeeId').value = employeeData.employeeId;
+    document.getElementById('editEmployeeName').value = employeeData.name;
+    document.getElementById('editEmployeeEmail').value = employeeData.email || '';
+    document.getElementById('editEmployeeRole').value = employeeData.role;
+    document.getElementById('editEmployeeAddress').value = employeeData.address || '';
+    
+    // Handle profile picture
+    if (employeeData.profile) {
+        currentProfilePicture.value = employeeData.profile;
+        editProfilePreview.src = employeeData.profile;
+        editProfilePreview.style.display = 'block';
+        editUploadPlaceholder.style.display = 'none';
+        btnEditRemoveImage.style.display = 'inline-block';
+        editProfileUploadArea.classList.add('has-image');
+    } else {
+        clearEditProfileImage();
+    }
+    
+    editModal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+// Close edit modal
+function closeEditModal() {
+    editModal.classList.remove('active');
+    document.body.style.overflow = '';
+    editEmployeeForm.reset();
+    clearEditProfileImage();
+}
+
+function clearEditProfileImage() {
+    editSelectedFile = null;
+    editProfilePictureInput.value = '';
+    editProfilePreview.style.display = 'none';
+    editUploadPlaceholder.style.display = 'block';
+    btnEditRemoveImage.style.display = 'none';
+    editProfileUploadArea.classList.remove('has-image');
+    currentProfilePicture.value = '';
+}
+
+editModalClose?.addEventListener('click', closeEditModal);
+editModalOverlay?.addEventListener('click', closeEditModal);
+
+// Edit profile picture upload
+editProfileUploadArea?.addEventListener('click', () => {
+    editProfilePictureInput.click();
+});
+
+editProfilePictureInput?.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        if (file.size > 2 * 1024 * 1024) {
+            alert('File size must be less than 2MB');
+            return;
+        }
+        
+        if (!file.type.match('image/(png|jpeg|jpg)')) {
+            alert('Only PNG and JPG files are allowed');
+            return;
+        }
+        
+        editSelectedFile = file;
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            editProfilePreview.src = e.target.result;
+            editProfilePreview.style.display = 'block';
+            editUploadPlaceholder.style.display = 'none';
+            btnEditRemoveImage.style.display = 'inline-block';
+            editProfileUploadArea.classList.add('has-image');
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+btnEditRemoveImage?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    clearEditProfileImage();
+});
+
+// Handle edit button clicks
+document.querySelectorAll('.btn-edit-employee').forEach(button => {
+    button.addEventListener('click', function() {
+        const employeeData = {
+            id: this.dataset.id,
+            employeeId: this.dataset.employeeId,
+            name: this.dataset.name,
+            email: this.dataset.email,
+            role: this.dataset.role,
+            address: this.dataset.address,
+            profile: this.dataset.profile
+        };
+        openEditModal(employeeData);
+    });
+});
+
+// Handle edit form submission
+editEmployeeForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const formData = new FormData(editEmployeeForm);
+    
+    // Validate email format
+    const email = formData.get('email');
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        alert('Please enter a valid email address');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/employee/update/', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('Employee updated successfully!');
+            closeEditModal();
+            window.location.reload();
+        } else {
+            alert('Error: ' + (data.error || 'Failed to update employee'));
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('An error occurred while updating employee');
+    }
+});
+
+// Delete Employee Functionality
+document.querySelectorAll('.btn-delete-employee').forEach(button => {
+    button.addEventListener('click', async function() {
+        const employeeId = this.dataset.id;
+        const employeeName = this.dataset.name;
+        const empId = this.dataset.employeeId;
+        
+        if (!confirm(`Are you sure you want to delete "${employeeName}" (${empId})?\n\nThis action cannot be undone.`)) {
+            return;
+        }
+        
+        try {
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            
+            const response = await fetch('/api/employee/delete/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({
+                    id: employeeId
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                alert(data.message);
+                window.location.reload();
+            } else {
+                alert('Error: ' + (data.error || 'Failed to delete employee'));
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred while deleting employee');
+        }
+    });
+});
+
+// Clear search button
+document.getElementById('clearSearch')?.addEventListener('click', function() {
+    const form = document.getElementById('searchForm');
+    const searchInput = form.querySelector('[name="search"]');
+    searchInput.value = '';
+    form.submit();
+});
+
+// Select All Checkbox
+document.getElementById('selectAll')?.addEventListener('change', function() {
+    const checkboxes = document.querySelectorAll('.employee-checkbox');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = this.checked;
+    });
+});
+
+// Search with debounce
+const searchInput = document.querySelector('.search-input');
+let searchTimeout;
+
+searchInput?.addEventListener('input', function() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        this.form.submit();
+    }, 500);
+});
+
+// Close modals on Escape key
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        if (modal.classList.contains('active')) {
+            closeModal();
+        }
+        if (editModal.classList.contains('active')) {
+            closeEditModal();
+        }
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Login - SmartRetail{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <div class="logo">SmartRetail</div>
+    
+    <div class="login-card">
+        <h1 class="login-title">Welcome Back</h1>
+        <p class="login-subtitle">We're so excited to see you again!</p>
+        
+        <form method="POST" action="{% url 'login_submit' %}" class="login-form">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input 
+                    type="email" 
+                    id="email" 
+                    name="email" 
+                    class="form-input" 
+                    required
+                    autocomplete="email"
+                >
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input 
+                    type="password" 
+                    id="password" 
+                    name="password" 
+                    class="form-input" 
+                    required
+                    autocomplete="current-password"
+                >
+            </div>
+            
+            <a href="#" class="forgot-password">Forgot your password?</a>
+            
+            <button type="submit" class="btn-login">Log in</button>
+            
+            <p class="signup-text">
+                Don't have an account? Contact your administrator.
+            </p>
+        </form>
+    </div>
+</div>
+{% endblock %}

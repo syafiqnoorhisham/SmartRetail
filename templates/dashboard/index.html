@@ -1,0 +1,267 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}Dashboard - SmartRetail{% endblock %}
+{% block page_title %}DASHBOARD{% endblock %}
+
+{% block content %}
+<!-- Metrics Cards -->
+<div class="metrics-grid">
+    <!-- Daily Sales Card -->
+    <div class="metric-card">
+        <div class="metric-header">
+            <h3>Daily Sales</h3>
+        </div>
+        <div class="metric-value">
+            <span class="currency">RM</span>
+            <span class="amount">{{ sales_data.today|floatformat:2 }}</span>
+        </div>
+        <div class="metric-change {% if sales_data.is_positive %}positive{% else %}negative{% endif %}">
+            <span class="arrow">{% if sales_data.is_positive %}↑{% else %}↓{% endif %}</span>
+            <span>{{ sales_data.percentage }}%</span>
+            <span class="vs-text">vs Yesterday</span>
+        </div>
+        <canvas id="salesSparkline" class="sparkline"></canvas>
+    </div>
+    
+    <!-- Items Sold Card -->
+    <div class="metric-card">
+        <div class="metric-header">
+            <h3>Item sold</h3>
+        </div>
+        <div class="metric-value">
+            <span class="amount">{{ items_data.today }}</span>
+            <span class="unit">unit</span>
+        </div>
+        <div class="metric-change {% if items_data.is_positive %}positive{% else %}negative{% endif %}">
+            <span class="arrow">{% if items_data.is_positive %}↑{% else %}↓{% endif %}</span>
+            <span>{{ items_data.percentage }}%</span>
+            <span class="vs-text">vs Yesterday</span>
+        </div>
+        <canvas id="itemsSparkline" class="sparkline"></canvas>
+    </div>
+    
+    <!-- Employee Card -->
+    <div class="metric-card">
+        <div class="metric-header">
+            <h3>Employee</h3>
+        </div>
+        <div class="metric-value">
+            <span class="amount">{{ employee_data.active }}</span>
+        </div>
+        <div class="metric-subtext">
+            <span>{{ employee_data.active }} employee / {{ employee_data.total }} employee</span>
+        </div>
+        <canvas id="employeeSparkline" class="sparkline"></canvas>
+    </div>
+</div>
+
+<!-- Second Row: Stock Notification and Sales Trend -->
+<div class="dashboard-row">
+    <!-- Stock Notification -->
+    <div class="stock-notification-panel">
+        <div class="panel-header">
+            <h3>Stock Notification</h3>
+        </div>
+        
+        <div class="stock-section">
+            <div class="stock-header">
+                <span class="stock-title">Low Stock</span>
+                <a href="{% url 'inventory' %}" class="see-all">See All</a>
+            </div>
+            
+            <div class="stock-list">
+                <div class="stock-list-header">
+                    <span>Product</span>
+                    <span>Quantity</span>
+                </div>
+                
+                {% for product in low_stock_products %}
+                <div class="stock-item">
+                    <span class="product-name">{{ product.name }}</span>
+                    <span class="product-quantity low-stock">{{ product.current_stock }}/{{ product.max_stock }}</span>
+                </div>
+                {% empty %}
+                <div class="no-data">
+                    <p>All products are well stocked!</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sales Trend Chart -->
+    <div class="sales-trend-panel">
+        <canvas id="salesTrendChart"></canvas>
+    </div>
+</div>
+
+<!-- Recent Transactions Table -->
+<div class="transactions-panel">
+    <div class="panel-header">
+        <h3>Recent Transactions</h3>
+    </div>
+    
+    <div class="table-container">
+        <table class="transactions-table">
+            <thead>
+                <tr>
+                    <th>Sale ID</th>
+                    <th>User ID</th>
+                    <th>Sales Date</th>
+                    <th>Total Amount</th>
+                    <th>Payment Method</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for transaction in recent_transactions %}
+                <tr>
+                    <td>{{ transaction.sale_id }}</td>
+                    <td>{{ transaction.user_id }}</td>
+                    <td>{{ transaction.sales_date|date:"d/m/Y g:iA" }}</td>
+                    <td>RM {{ transaction.total_amount|floatformat:2 }}</td>
+                    <td><span class="payment-badge {{ transaction.payment_method|lower }}">{{ transaction.payment_method }}</span></td>
+                    <td class="actions">
+                        <button class="action-btn edit-btn" title="Edit">✏️</button>
+                        <button class="action-btn delete-btn" title="Delete">✖️</button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="no-data">No transactions found</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Sparkline Charts Configuration
+const sparklineConfig = {
+    type: 'line',
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false },
+            tooltip: { enabled: false }
+        },
+        scales: {
+            x: { display: false },
+            y: { display: false, beginAtZero: true }
+        },
+        elements: {
+            line: {
+                borderColor: '#00C853',
+                borderWidth: 2,
+                tension: 0.4,
+                fill: true,
+                backgroundColor: 'rgba(0, 200, 83, 0.1)'
+            },
+            point: { radius: 0 }
+        },
+        layout: {
+            padding: 0
+        }
+    }
+};
+
+// Sales Sparkline
+const salesCtx = document.getElementById('salesSparkline').getContext('2d');
+new Chart(salesCtx, {
+    ...sparklineConfig,
+    data: {
+        labels: ['', '', '', '', '', '', ''],
+        datasets: [{
+            data: [30, 45, 35, 50, 40, 55, 48]
+        }]
+    }
+});
+
+// Items Sparkline
+const itemsCtx = document.getElementById('itemsSparkline').getContext('2d');
+new Chart(itemsCtx, {
+    ...sparklineConfig,
+    data: {
+        labels: ['', '', '', '', '', '', ''],
+        datasets: [{
+            data: [20, 35, 30, 45, 38, 50, 42]
+        }]
+    }
+});
+
+// Employee Sparkline
+const employeeCtx = document.getElementById('employeeSparkline').getContext('2d');
+new Chart(employeeCtx, {
+    ...sparklineConfig,
+    data: {
+        labels: ['', '', '', '', '', '', ''],
+        datasets: [{
+            data: [5, 5, 6, 5, 5, 5, 5]
+        }]
+    }
+});
+
+// Sales Trend Bar Chart
+const salesTrendCtx = document.getElementById('salesTrendChart').getContext('2d');
+const salesTrendData = {{ sales_trend|safe }};
+
+// Prepare chart data
+const trendLabels = salesTrendData.map(item => item.date);
+const trendValues = salesTrendData.map(item => item.amount);
+
+new Chart(salesTrendCtx, {
+    type: 'bar',
+    data: {
+        labels: trendLabels.length > 0 ? trendLabels : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+        datasets: [{
+            label: 'Sales (RM)',
+            data: trendValues.length > 0 ? trendValues : [150, 200, 180, 220, 250, 190, 240],
+            backgroundColor: 'rgba(0, 200, 83, 0.8)',
+            borderColor: '#00C853',
+            borderWidth: 1,
+            borderRadius: 4
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                padding: 10,
+                displayColors: false,
+                callbacks: {
+                    label: function(context) {
+                        return 'RM ' + context.parsed.y.toFixed(2);
+                    }
+                }
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                grid: {
+                    color: 'rgba(0, 0, 0, 0.05)'
+                },
+                ticks: {
+                    callback: function(value) {
+                        return 'RM ' + value;
+                    }
+                }
+            },
+            x: {
+                grid: {
+                    display: false
+                }
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

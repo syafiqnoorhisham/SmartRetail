@@ -1,0 +1,100 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SmartRetail Dashboard{% endblock %}</title>
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <h1>Smart<span>Retail</span></h1>
+            </div>
+            
+            <nav class="nav-menu">
+                <a href="{% url 'dashboard' %}" class="nav-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                    <span class="icon">📊</span>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{% url 'sales' %}" class="nav-item {% if request.resolver_match.url_name == 'sales' %}active{% endif %}">
+                    <span class="icon">💰</span>
+                    <span>Sales</span>
+                </a>
+                <a href="{% url 'inventory' %}" class="nav-item {% if request.resolver_match.url_name == 'inventory' %}active{% endif %}">
+                    <span class="icon">📦</span>
+                    <span>Inventory</span>
+                </a>
+                <a href="{% url 'employees' %}" class="nav-item {% if request.resolver_match.url_name == 'employees' %}active{% endif %}">
+                    <span class="icon">👥</span>
+                    <span>Employees</span>
+                </a>
+                <a href="{% url 'suppliers' %}" class="nav-item {% if request.resolver_match.url_name == 'suppliers' %}active{% endif %}">
+                    <span class="icon">🚚</span>
+                    <span>Suppliers</span>
+                </a>
+                <a href="{% url 'report' %}" class="nav-item {% if request.resolver_match.url_name == 'report' %}active{% endif %}">
+                    <span class="icon">📈</span>
+                    <span>Report</span>
+                </a>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <a href="{% url 'logout' %}" class="nav-item logout">
+                    <span class="icon">🚪</span>
+                    <span>Log Out</span>
+                </a>
+            </div>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div class="page-title">
+                    <h2>{% block page_title %}DASHBOARD{% endblock %}</h2>
+                </div>
+                
+                <div class="header-actions">
+                    <div class="language-selector">
+                        <select>
+                            <option>En</option>
+                        </select>
+                    </div>
+                    <div class="user-profile">
+                        <span>{{ user_email }}</span>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- Messages -->
+            {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            <!-- Page Content -->
+            <div class="content">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
