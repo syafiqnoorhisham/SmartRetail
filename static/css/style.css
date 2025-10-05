@@ -1,4 +1,8 @@
-/* Reset and Base Styles */
+/* SmartRetail Login CSS - Mobile Responsive */
+
+/* ========================================
+   RESET AND BASE STYLES
+   ======================================== */
 * {
     margin: 0;
     padding: 0;
@@ -13,32 +17,39 @@ body {
     -moz-osx-font-smoothing: grayscale;
     background: linear-gradient(135deg, #e8e8e8 0%, #d5d5d5 100%);
     min-height: 100vh;
+    overflow-x: hidden;
 }
 
-/* Messages Container */
+/* ========================================
+   MESSAGES CONTAINER
+   ======================================== */
 .messages-container {
     position: fixed;
     top: 20px;
     right: 20px;
+    left: 20px;
     z-index: 1000;
     max-width: 400px;
+    margin: 0 auto;
 }
 
 .message {
-    padding: 15px 20px;
+    padding: 14px 18px;
     border-radius: 8px;
     margin-bottom: 10px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     animation: slideIn 0.3s ease-out;
+    font-size: 14px;
+    word-wrap: break-word;
 }
 
 @keyframes slideIn {
     from {
-        transform: translateX(100%);
+        transform: translateY(-20px);
         opacity: 0;
     }
     to {
-        transform: translateX(0);
+        transform: translateY(0);
         opacity: 1;
     }
 }
@@ -63,7 +74,9 @@ body {
     color: white;
 }
 
-/* Login Container */
+/* ========================================
+   LOGIN CONTAINER
+   ======================================== */
 .login-container {
     display: flex;
     flex-direction: column;
@@ -71,30 +84,50 @@ body {
     justify-content: center;
     min-height: 100vh;
     padding: 20px;
+    position: relative;
 }
 
+/* ========================================
+   LOGO
+   ======================================== */
 .logo {
-    font-size: 48px;
+    font-size: 42px;
     font-weight: bold;
     background: linear-gradient(90deg, #4ade80 0%, #22c55e 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    margin-bottom: 40px;
+    margin-bottom: 32px;
     letter-spacing: -1px;
+    text-align: center;
 }
 
+/* ========================================
+   LOGIN CARD
+   ======================================== */
 .login-card {
     background: white;
     border-radius: 16px;
-    padding: 48px 40px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    padding: 40px 32px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
     width: 100%;
     max-width: 460px;
+    animation: fadeInUp 0.5s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .login-title {
-    font-size: 28px;
+    font-size: 26px;
     font-weight: 600;
     color: #1a1a1a;
     margin-bottom: 8px;
@@ -102,12 +135,16 @@ body {
 }
 
 .login-subtitle {
-    font-size: 16px;
+    font-size: 15px;
     color: #999;
     text-align: center;
-    margin-bottom: 32px;
+    margin-bottom: 28px;
+    line-height: 1.4;
 }
 
+/* ========================================
+   LOGIN FORM
+   ======================================== */
 .login-form {
     display: flex;
     flex-direction: column;
@@ -128,12 +165,13 @@ body {
 .form-input {
     width: 100%;
     padding: 14px 16px;
-    font-size: 16px;
+    font-size: 16px; /* Prevents zoom on iOS */
     border: 1px solid #e0e0e0;
     border-radius: 8px;
     background-color: #fafafa;
     transition: all 0.3s ease;
     outline: none;
+    -webkit-appearance: none; /* Remove iOS styling */
 }
 
 .form-input:focus {
@@ -142,20 +180,19 @@ body {
     box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.1);
 }
 
-.forgot-password {
-    display: block;
-    text-align: left;
-    font-size: 14px;
-    color: #666;
-    text-decoration: underline;
-    margin-bottom: 24px;
-    transition: color 0.2s ease;
+/* Remove autofill background */
+.form-input:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0 30px #fafafa inset;
+    -webkit-text-fill-color: #333;
 }
 
-.forgot-password:hover {
-    color: #4ade80;
+.form-input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 30px white inset;
 }
 
+/* ========================================
+   BUTTONS
+   ======================================== */
 .btn-login {
     width: 100%;
     padding: 16px;
@@ -168,6 +205,9 @@ body {
     cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: 0 4px 12px rgba(74, 222, 128, 0.3);
+    margin-top: 8px;
+    min-height: 52px; /* Touch-friendly */
+    -webkit-tap-highlight-color: transparent;
 }
 
 .btn-login:hover {
@@ -177,13 +217,25 @@ body {
 
 .btn-login:active {
     transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(74, 222, 128, 0.3);
 }
 
+/* Loading state */
+.btn-login:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* ========================================
+   SIGNUP TEXT
+   ======================================== */
 .signup-text {
     text-align: center;
     margin-top: 24px;
     font-size: 14px;
     color: #666;
+    line-height: 1.5;
 }
 
 .signup-link {
@@ -197,22 +249,26 @@ body {
     color: #22c55e;
 }
 
-/* Dashboard Styles */
+/* ========================================
+   DASHBOARD STYLES
+   ======================================== */
 .dashboard-container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 40px 20px;
+    padding: 32px 20px;
 }
 
 .dashboard-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 40px;
+    margin-bottom: 32px;
+    gap: 16px;
+    flex-wrap: wrap;
 }
 
 .dashboard-header h1 {
-    font-size: 36px;
+    font-size: 32px;
     color: #1a1a1a;
 }
 
@@ -225,6 +281,10 @@ body {
     font-weight: 600;
     transition: all 0.3s ease;
     box-shadow: 0 4px 12px rgba(74, 222, 128, 0.3);
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .logout-btn:hover {
@@ -232,54 +292,227 @@ body {
     box-shadow: 0 6px 16px rgba(74, 222, 128, 0.4);
 }
 
+.logout-btn:active {
+    transform: translateY(0);
+}
+
 .dashboard-content {
     background: white;
     border-radius: 16px;
-    padding: 48px;
+    padding: 40px 32px;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
 }
 
 .dashboard-content h2 {
-    font-size: 32px;
+    font-size: 28px;
     color: #1a1a1a;
     margin-bottom: 16px;
 }
 
 .dashboard-content p {
-    font-size: 18px;
+    font-size: 16px;
     color: #666;
+    line-height: 1.6;
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
+/* ========================================
+   TABLET RESPONSIVE (768px - 1024px)
+   ======================================== */
+@media (min-width: 768px) and (max-width: 1024px) {
+    .login-card {
+        padding: 44px 36px;
+    }
+    
+    .logo {
+        font-size: 48px;
+        margin-bottom: 36px;
+    }
+    
+    .messages-container {
+        right: auto;
+        left: auto;
+    }
+}
+
+/* ========================================
+   MOBILE RESPONSIVE (< 768px)
+   ======================================== */
+@media (max-width: 767px) {
     .logo {
         font-size: 36px;
-        margin-bottom: 30px;
+        margin-bottom: 28px;
     }
 
     .login-card {
         padding: 32px 24px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
     }
 
     .login-title {
         font-size: 24px;
     }
 
+    .login-subtitle {
+        font-size: 14px;
+    }
+    
+    .form-input {
+        padding: 12px 14px;
+    }
+    
+    .btn-login {
+        padding: 14px;
+        font-size: 15px;
+    }
+
+    .messages-container {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+    }
+    
+    .message {
+        padding: 12px 16px;
+        font-size: 13px;
+    }
+
     .dashboard-header {
         flex-direction: column;
-        align-items: flex-start;
-        gap: 20px;
+        align-items: stretch;
     }
 
     .dashboard-header h1 {
-        font-size: 28px;
+        font-size: 26px;
+        text-align: center;
+    }
+    
+    .logout-btn {
+        width: 100%;
     }
 
     .dashboard-content {
-        padding: 32px 24px;
+        padding: 28px 20px;
     }
 
     .dashboard-content h2 {
-        font-size: 24px;
+        font-size: 22px;
+    }
+    
+    .dashboard-content p {
+        font-size: 15px;
+    }
+}
+
+/* ========================================
+   SMALL MOBILE (< 480px)
+   ======================================== */
+@media (max-width: 479px) {
+    .login-container {
+        padding: 16px;
+    }
+    
+    .logo {
+        font-size: 32px;
+        margin-bottom: 24px;
+    }
+
+    .login-card {
+        padding: 28px 20px;
+    }
+
+    .login-title {
+        font-size: 22px;
+    }
+
+    .login-subtitle {
+        font-size: 13px;
+        margin-bottom: 24px;
+    }
+    
+    .form-group {
+        margin-bottom: 18px;
+    }
+    
+    .signup-text {
+        font-size: 13px;
+        margin-top: 20px;
+    }
+    
+    .dashboard-container {
+        padding: 20px 16px;
+    }
+}
+
+/* ========================================
+   LANDSCAPE MODE MOBILE
+   ======================================== */
+@media (max-width: 767px) and (orientation: landscape) {
+    .login-container {
+        padding: 20px;
+        min-height: auto;
+        padding-top: 40px;
+        padding-bottom: 40px;
+    }
+    
+    .logo {
+        font-size: 28px;
+        margin-bottom: 20px;
+    }
+    
+    .login-card {
+        padding: 24px 28px;
+    }
+    
+    .login-title {
+        font-size: 20px;
+        margin-bottom: 6px;
+    }
+    
+    .login-subtitle {
+        font-size: 13px;
+        margin-bottom: 20px;
+    }
+    
+    .form-group {
+        margin-bottom: 16px;
+    }
+    
+    .btn-login {
+        padding: 12px;
+        min-height: 44px;
+    }
+}
+
+/* ========================================
+   FOCUS VISIBLE (ACCESSIBILITY)
+   ======================================== */
+.form-input:focus-visible,
+.btn-login:focus-visible,
+.logout-btn:focus-visible {
+    outline: 2px solid #4ade80;
+    outline-offset: 2px;
+}
+
+/* ========================================
+   HIGH CONTRAST MODE
+   ======================================== */
+@media (prefers-contrast: high) {
+    .form-input {
+        border-width: 2px;
+    }
+    
+    .btn-login {
+        border: 2px solid #22c55e;
+    }
+}
+
+/* ========================================
+   REDUCED MOTION
+   ======================================== */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
     }
 }

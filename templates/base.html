@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#4ade80">
     <title>{% block title %}SmartRetail{% endblock %}</title>
     {% load static %}
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
@@ -12,7 +15,7 @@
     {% if messages %}
         <div class="messages-container">
             {% for message in messages %}
-                <div class="message message-{{ message.tags }}">
+                <div class="message message-{{ message.tags }}" role="alert">
                     {{ message }}
                 </div>
             {% endfor %}

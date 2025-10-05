@@ -3,7 +3,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#00C853">
     <title>{% block title %}SmartRetail Dashboard{% endblock %}</title>
     
     <!-- CSS -->
@@ -16,8 +19,10 @@
 </head>
 <body>
     <div class="dashboard-container">
+        <!-- Mobile Overlay - dynamically added by JS -->
+        
         <!-- Sidebar -->
-        <aside class="sidebar">
+        <aside class="sidebar" id="sidebar">
             <div class="logo">
                 <h1>Smart<span>Retail</span></h1>
             </div>
@@ -67,7 +72,7 @@
                 
                 <div class="header-actions">
                     <div class="language-selector">
-                        <select>
+                        <select aria-label="Language selection">
                             <option>En</option>
                         </select>
                     </div>
@@ -81,7 +86,7 @@
             {% if messages %}
             <div class="messages">
                 {% for message in messages %}
-                <div class="alert alert-{{ message.tags }}">
+                <div class="alert alert-{{ message.tags }}" role="alert">
                     {{ message }}
                 </div>
                 {% endfor %}
@@ -94,6 +99,9 @@
             </div>
         </main>
     </div>
+    
+    <!-- Mobile Navigation Script -->
+    <script src="{% static 'js/mobile-nav.js' %}"></script>
     
     {% block extra_js %}{% endblock %}
 </body>
