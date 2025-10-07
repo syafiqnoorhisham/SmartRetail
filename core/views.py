@@ -336,16 +336,55 @@ def inventory_view(request):
 
 
 def sales_view(request):
-    """Display sales page"""
+    """Display sales page with list of sales and POS interface"""
     if not request.session.get('user_id'):
         messages.warning(request, 'Please login to access sales.')
         return redirect('login')
     
-    context = {
-        'user_email': request.session.get('user_email', 'User'),
-    }
-    
-    return render(request, 'dashboard/sales.html', context)
+    try:
+        supabase = get_supabase_client()
+        
+        # Get all sales with items
+        sales_result = supabase.table('sales')\
+            .select('*')\
+            .order('sales_date', desc=True)\
+            .execute()
+        
+        sales = sales_result.data if sales_result.data else []
+        
+        # Get all products for POS
+        products_result = supabase.table('products')\
+            .select('*')\
+            .order('category, name')\
+            .execute()
+        
+        products = products_result.data if products_result.data else []
+        
+        # Get unique categories
+        categories = list(set([p['category'] for p in products]))
+        categories.sort()
+        
+        context = {
+            'user_email': request.session.get('user_email', 'User'),
+            'sales': sales,
+            'products': products,
+            'categories': categories,
+        }
+        
+        return render(request, 'dashboard/sales.html', context)
+        
+    except Exception as e:
+        logger.error(f"Sales view error: {str(e)}")
+        messages.error(request, 'Error loading sales data.')
+        
+        context = {
+            'user_email': request.session.get('user_email', 'User'),
+            'sales': [],
+            'products': [],
+            'categories': [],
+        }
+        
+        return render(request, 'dashboard/sales.html', context)
 
 
 def employees_view(request):
@@ -941,4 +980,269 @@ def api_delete_employee(request):
         
     except Exception as e:
         logger.error(f"Delete employee error: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+# Sales API Endpoints
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def api_create_sale(request):
+    """API endpoint to create a new sale transaction"""
+    if not request.session.get('user_id'):
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+    
+    try:
+        data = json.loads(request.body)
+        payment_method = data.get('payment_method')
+        total_amount = float(data.get('total_amount', 0))
+        items = data.get('items', [])
+        
+        if not payment_method or total_amount <= 0 or not items:
+            return JsonResponse({'error': 'Invalid sale data'}, status=400)
+        
+        client = get_supabase_client()
+        user_id = request.session.get('user_id')
+        
+        # Generate sale ID
+        sales_result = client.table('sales')\
+            .select('sale_id')\
+            .execute()
+        
+        existing_ids = [s['sale_id'] for s in sales_result.data] if sales_result.data else []
+        next_num = 1
+        for i in range(1, 100000):
+            test_id = f"{i:04d}"
+            if test_id not in existing_ids:
+                next_num = i
+                break
+        
+        sale_id = f"{next_num:04d}"
+        
+        # Create sale record
+        from datetime import datetime
+        sale_data = {
+            'sale_id': sale_id,
+            'user_id': f"#{user_id[:3]}" if len(user_id) > 3 else f"#{user_id}",
+            'total_amount': total_amount,
+            'payment_method': payment_method,
+            'status': 'completed',
+            'sales_date': datetime.now().isoformat()
+        }
+        
+        sale_result = client.table('sales').insert(sale_data).execute()
+        
+        if not sale_result.data:
+            return JsonResponse({'error': 'Failed to create sale'}, status=500)
+        
+        sale = sale_result.data[0]
+        
+        # Create sale items and update product stock
+        sale_items = []
+        for item in items:
+            product_id = item['product_id']
+            quantity = item['quantity']
+            
+            # Get product details
+            product_result = client.table('products')\
+                .select('*')\
+                .eq('product_id', product_id)\
+                .execute()
+            
+            if product_result.data:
+                product = product_result.data[0]
+                
+                # Create sale item
+                sale_item = {
+                    'sale_id': sale['id'],
+                    'product_id': product['id'],
+                    'quantity': quantity,
+                    'unit_price': item['unit_price'],
+                    'subtotal': item['subtotal']
+                }
+                
+                item_result = client.table('sales_items').insert(sale_item).execute()
+                
+                if item_result.data:
+                    sale_items.append({
+                        'product_name': product['name'],
+                        'quantity': quantity,
+                        'subtotal': item['subtotal']
+                    })
+                
+                # Update product stock
+                new_stock = max(0, product['current_stock'] - quantity)
+                new_status = calculate_stock_status(
+                    new_stock,
+                    product['max_stock'],
+                    product['low_stock_threshold']
+                )
+                
+                client.table('products')\
+                    .update({
+                        'current_stock': new_stock,
+                        'status': new_status
+                    })\
+                    .eq('product_id', product_id)\
+                    .execute()
+        
+        logger.info(f"Sale created: {sale_id} - RM{total_amount}")
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Sale created successfully',
+            'sale': {
+                'id': sale['id'],
+                'sale_id': sale['sale_id'],
+                'user_id': sale['user_id'],
+                'total_amount': sale['total_amount'],
+                'payment_method': sale['payment_method'],
+                'sales_date': sale['sales_date'],
+                'items': sale_items
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Create sale error: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def api_delete_sale(request):
+    """API endpoint to delete a sale transaction"""
+    if not request.session.get('user_id'):
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+    
+    try:
+        data = json.loads(request.body)
+        sale_db_id = data.get('id')
+        
+        if not sale_db_id:
+            return JsonResponse({'error': 'Sale ID is required'}, status=400)
+        
+        client = get_supabase_client()
+        
+        # Check if sale exists and get items
+        sale_result = client.table('sales')\
+            .select('id, sale_id, total_amount')\
+            .eq('id', sale_db_id)\
+            .execute()
+        
+        if not sale_result.data:
+            return JsonResponse({'error': 'Sale not found'}, status=404)
+        
+        sale = sale_result.data[0]
+        sale_id = sale['sale_id']
+        
+        # Get sale items to restore stock
+        items_result = client.table('sales_items')\
+            .select('*, products(*)')\
+            .eq('sale_id', sale_db_id)\
+            .execute()
+        
+        # Restore product stock
+        if items_result.data:
+            for item in items_result.data:
+                if item.get('products'):
+                    product = item['products']
+                    product_id = product['product_id']
+                    quantity = item['quantity']
+                    
+                    # Restore stock
+                    new_stock = product['current_stock'] + quantity
+                    new_status = calculate_stock_status(
+                        new_stock,
+                        product['max_stock'],
+                        product['low_stock_threshold']
+                    )
+                    
+                    client.table('products')\
+                        .update({
+                            'current_stock': new_stock,
+                            'status': new_status
+                        })\
+                        .eq('product_id', product_id)\
+                        .execute()
+        
+        # Delete sale items first
+        client.table('sales_items')\
+            .delete()\
+            .eq('sale_id', sale_db_id)\
+            .execute()
+        
+        # Delete the sale
+        client.table('sales')\
+            .delete()\
+            .eq('id', sale_db_id)\
+            .execute()
+        
+        logger.info(f"Sale deleted: {sale_id}")
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Sale {sale_id} deleted successfully'
+        })
+        
+    except Exception as e:
+        logger.error(f"Delete sale error: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@require_http_methods(["GET"])
+def api_get_sale(request):
+    """API endpoint to get sale details for receipt viewing"""
+    if not request.session.get('user_id'):
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+    
+    try:
+        sale_id = request.GET.get('id')
+        
+        if not sale_id:
+            return JsonResponse({'error': 'Sale ID is required'}, status=400)
+        
+        client = get_supabase_client()
+        
+        # Get sale details
+        sale_result = client.table('sales')\
+            .select('*')\
+            .eq('id', sale_id)\
+            .execute()
+        
+        if not sale_result.data:
+            return JsonResponse({'error': 'Sale not found'}, status=404)
+        
+        sale = sale_result.data[0]
+        
+        # Get sale items with product details
+        items_result = client.table('sales_items')\
+            .select('*, products(name)')\
+            .eq('sale_id', sale_id)\
+            .execute()
+        
+        # Format items for receipt
+        sale_items = []
+        if items_result.data:
+            for item in items_result.data:
+                sale_items.append({
+                    'product_name': item['products']['name'] if item.get('products') else 'Unknown Product',
+                    'quantity': item['quantity'],
+                    'subtotal': float(item['subtotal'])
+                })
+        
+        return JsonResponse({
+            'success': True,
+            'sale': {
+                'id': sale['id'],
+                'sale_id': sale['sale_id'],
+                'user_id': sale['user_id'],
+                'total_amount': float(sale['total_amount']),
+                'payment_method': sale['payment_method'],
+                'sales_date': sale['sales_date'],
+                'items': sale_items
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Get sale error: {str(e)}")
         return JsonResponse({'error': str(e)}, status=500)

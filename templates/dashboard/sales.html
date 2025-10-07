@@ -1,11 +1,1040 @@
 {% extends "dashboard/base.html" %}
+{% load static %}
 
 {% block title %}Sales - SmartRetail{% endblock %}
 {% block page_title %}SALES{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* Sales List Styles */
+    .sales-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
+    .btn-new-sale {
+        background: #00C853;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 44px;
+        text-decoration: none;
+    }
+
+    .btn-new-sale:hover {
+        background: #00E676;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 200, 83, 0.3);
+    }
+
+    .sales-table-container {
+        background: #fff;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        overflow-x: auto;
+    }
+
+    .sales-table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 800px;
+    }
+
+    .sales-table thead {
+        background-color: #E0E0E0;
+    }
+
+    .sales-table th {
+        padding: 16px 12px;
+        text-align: left;
+        font-size: 14px;
+        font-weight: 600;
+        color: #000;
+        text-transform: capitalize;
+        white-space: nowrap;
+    }
+
+    .sales-table td {
+        padding: 16px 12px;
+        border-bottom: 1px solid #f0f0f0;
+        font-size: 14px;
+        color: #333;
+    }
+
+    .sales-table tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+
+    /* New Sales/POS Styles */
+    .pos-container {
+        display: grid;
+        grid-template-columns: 1fr 400px;
+        gap: 24px;
+        height: calc(100vh - 200px);
+    }
+
+    .products-section {
+        background: #fff;
+        border-radius: 12px;
+        padding: 20px;
+        overflow-y: auto;
+    }
+
+    .category-tabs-pos {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 20px;
+        overflow-x: auto;
+        padding-bottom: 8px;
+    }
+
+    .category-tab-pos {
+        background: #FFC107;
+        color: #000;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: all 0.3s ease;
+    }
+
+    .category-tab-pos.active {
+        background: #FF9800;
+        color: #fff;
+    }
+
+    .products-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .products-table thead {
+        background-color: #E0E0E0;
+    }
+
+    .products-table th {
+        padding: 12px;
+        text-align: left;
+        font-size: 13px;
+        font-weight: 600;
+        color: #000;
+    }
+
+    .products-table td {
+        padding: 12px;
+        border-bottom: 1px solid #f0f0f0;
+        font-size: 14px;
+    }
+
+    .quantity-controls {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-quantity {
+        width: 32px;
+        height: 32px;
+        border: 2px solid #000;
+        background: #fff;
+        border-radius: 4px;
+        font-size: 18px;
+        font-weight: bold;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+    }
+
+    .btn-quantity:hover {
+        background: #f0f0f0;
+    }
+
+    .cart-section {
+        background: #E0E0E0;
+        border-radius: 12px;
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        position: sticky;
+        top: 20px;
+    }
+
+    .cart-items {
+        flex: 1;
+        overflow-y: auto;
+        margin-bottom: 20px;
+        min-height: 150px;
+    }
+
+    .cart-item {
+        background: #fff;
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .cart-item-icon {
+        width: 40px;
+        height: 40px;
+        background: #FFE0E6;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+    }
+
+    .cart-item-details {
+        flex: 1;
+    }
+
+    .cart-item-name {
+        font-weight: 600;
+        font-size: 14px;
+        margin-bottom: 4px;
+    }
+
+    .cart-item-quantity {
+        font-size: 12px;
+        color: #666;
+    }
+
+    .cart-item-price {
+        font-weight: 600;
+        font-size: 14px;
+    }
+
+    .cart-summary {
+        border-top: 2px solid #ccc;
+        padding-top: 16px;
+        margin-bottom: 16px;
+    }
+
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        font-size: 14px;
+    }
+
+    .summary-row.total {
+        font-size: 16px;
+        font-weight: 700;
+        padding-top: 12px;
+        border-top: 1px solid #ccc;
+    }
+
+    .payment-method-label {
+        font-weight: 600;
+        margin-bottom: 12px;
+        font-size: 14px;
+    }
+
+    .payment-methods {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+
+    .payment-method {
+        background: #fff;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        padding: 16px 8px;
+        cursor: pointer;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+
+    .payment-method:hover {
+        border-color: #00C853;
+    }
+
+    .payment-method.selected {
+        border-color: #00C853;
+        background: #E8F5E9;
+    }
+
+    .payment-method-icon {
+        font-size: 32px;
+        margin-bottom: 8px;
+    }
+
+    .payment-method-name {
+        font-size: 12px;
+        font-weight: 500;
+    }
+
+    .btn-complete-order {
+        width: 100%;
+        background: #00C853;
+        color: #fff;
+        border: none;
+        padding: 16px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-complete-order:hover:not(:disabled) {
+        background: #00E676;
+    }
+
+    .btn-complete-order:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+    }
+
+    /* Receipt Modal Styles */
+    .receipt-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+
+    .receipt-modal.active {
+        display: flex;
+    }
+
+    .receipt-content {
+        background: #fff;
+        border-radius: 12px;
+        padding: 32px;
+        max-width: 450px;
+        width: 100%;
+        max-height: 85vh;
+        overflow-y: auto;
+        text-align: center;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .receipt-header {
+        margin-bottom: 24px;
+    }
+
+    .receipt-title {
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 10px;
+    }
+
+    .receipt-icon {
+        width: 50px;
+        height: 50px;
+        background: #00C853;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 12px;
+        font-size: 26px;
+        color: #fff;
+    }
+
+    .receipt-message {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 6px;
+    }
+
+    .receipt-submessage {
+        color: #666;
+        font-size: 13px;
+        margin-bottom: 20px;
+    }
+
+    .receipt-details {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+        text-align: left;
+        margin-bottom: 20px;
+    }
+
+    .receipt-date {
+        text-align: center;
+        font-size: 13px;
+        color: #666;
+        margin-bottom: 16px;
+        padding-bottom: 16px;
+        border-bottom: 1px dashed #ddd;
+    }
+
+    .receipt-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        font-size: 13px;
+    }
+
+    .receipt-row.bold {
+        font-weight: 600;
+        font-size: 14px;
+    }
+
+    .receipt-items {
+        margin: 16px 0;
+        padding: 16px 0;
+        border-top: 1px dashed #ddd;
+        border-bottom: 1px dashed #ddd;
+    }
+
+    .receipt-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        font-size: 13px;
+    }
+
+    .receipt-item-name {
+        flex: 1;
+    }
+
+    .receipt-total {
+        font-size: 18px;
+        font-weight: 700;
+        text-align: center;
+        margin: 12px 0;
+    }
+
+    .receipt-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    .btn-receipt {
+        padding: 14px 24px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: none;
+    }
+
+    .btn-print {
+        background: #00C853;
+        color: #fff;
+    }
+
+    .btn-continue {
+        background: #00C853;
+        color: #fff;
+    }
+
+    .btn-receipt:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+        .pos-container {
+            grid-template-columns: 1fr;
+            height: auto;
+        }
+
+        .cart-section {
+            position: relative;
+            top: 0;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .sales-header {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .btn-new-sale {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .payment-methods {
+            grid-template-columns: 1fr;
+        }
+
+        .receipt-modal {
+            padding: 10px;
+        }
+
+        .receipt-content {
+            padding: 20px;
+            max-width: 95%;
+            max-height: 90vh;
+        }
+
+        .receipt-actions {
+            grid-template-columns: 1fr;
+        }
+
+        .receipt-title {
+            font-size: 20px;
+        }
+
+        .receipt-icon {
+            width: 45px;
+            height: 45px;
+            font-size: 22px;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="coming-soon">
-    <h2>Sales Management</h2>
-    <p>This section is under development.</p>
+<!-- Sales List View -->
+<div id="salesListView">
+    <div class="sales-header">
+        <h2 style="font-size: 20px; font-weight: 600; margin: 0;">Sales Transactions</h2>
+        <a href="{% url 'sales' %}?view=new" class="btn-new-sale">
+            <span style="font-size: 20px;">+</span>
+            New Sales
+        </a>
+    </div>
+
+    <div class="sales-table-container">
+        <table class="sales-table">
+            <thead>
+                <tr>
+                    <th>Sale ID</th>
+                    <th>User ID</th>
+                    <th>Sales Date</th>
+                    <th>Total Amount</th>
+                    <th>Payment Method</th>
+                    <th style="text-align: center;">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="salesTableBody">
+                {% if sales %}
+                    {% for sale in sales %}
+                    <tr>
+                        <td>{{ sale.sale_id }}</td>
+                        <td>{{ sale.user_id }}</td>
+                        <td>{{ sale.sales_date }}</td>
+                        <td>RM {{ sale.total_amount }}</td>
+                        <td>
+                            <span class="payment-badge {{ sale.payment_method|lower }}">
+                                {{ sale.payment_method }}
+                            </span>
+                        </td>
+                        <td style="text-align: center;">
+                            <div class="actions">
+                                <button class="action-btn btn-view-receipt" data-id="{{ sale.id }}" data-sale-id="{{ sale.sale_id }}" title="View Receipt">
+                                    🧾
+                                </button>
+                                <button class="action-btn btn-delete-sale" data-id="{{ sale.id }}" title="Delete">
+                                    ❌
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 40px; color: #999;">
+                            No sales transactions yet. Click "New Sales" to create your first sale.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
 </div>
+
+<!-- New Sales/POS View -->
+<div id="newSalesView" style="display: none;">
+    <div class="sales-header">
+        <h2 style="font-size: 20px; font-weight: 600; margin: 0; display: flex; align-items: center; gap: 12px;">
+            <a href="{% url 'sales' %}" style="text-decoration: none; color: #333; font-size: 24px;">←</a>
+            New Sales
+        </h2>
+    </div>
+
+    <div class="pos-container">
+        <!-- Products Section -->
+        <div class="products-section">
+            <div class="category-tabs-pos" id="categoryTabs">
+                <button class="category-tab-pos active" data-category="all">All</button>
+                {% for category in categories %}
+                <button class="category-tab-pos" data-category="{{ category }}">{{ category }}</button>
+                {% endfor %}
+            </div>
+
+            <table class="products-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>NAME</th>
+                        <th>PRICE</th>
+                        <th style="text-align: center;">ACTIONS</th>
+                    </tr>
+                </thead>
+                <tbody id="productsTableBody">
+                    {% for product in products %}
+                    <tr data-category="{{ product.category }}">
+                        <td>{{ product.product_id }}</td>
+                        <td>{{ product.name }}</td>
+                        <td>RM {{ product.price }}</td>
+                        <td style="text-align: center;">
+                            <div class="quantity-controls">
+                                <button class="btn-quantity" onclick="addToCart('{{ product.product_id }}', '{{ product.name }}', {{ product.price }})">+</button>
+                                <button class="btn-quantity" onclick="removeFromCart('{{ product.product_id }}')">−</button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Cart Section -->
+        <div class="cart-section">
+            <div class="cart-items" id="cartItems">
+                <p style="text-align: center; color: #999; margin-top: 40px;">No items in cart</p>
+            </div>
+
+            <div class="cart-summary">
+                <div class="summary-row">
+                    <span>Total</span>
+                    <span id="cartTotal">RM 0.00</span>
+                </div>
+                <div class="summary-row">
+                    <span>Tax 5%</span>
+                    <span id="cartTax">RM 0.00</span>
+                </div>
+                <div class="summary-row total">
+                    <span>Subtotal</span>
+                    <span id="cartSubtotal">RM 0.00</span>
+                </div>
+            </div>
+
+            <div class="payment-method-label">Payment Method</div>
+            <div class="payment-methods">
+                <div class="payment-method" data-method="CASH">
+                    <div class="payment-method-icon">💵</div>
+                    <div class="payment-method-name">Cash</div>
+                </div>
+                <div class="payment-method" data-method="CARD">
+                    <div class="payment-method-icon">💳</div>
+                    <div class="payment-method-name">Debit Card</div>
+                </div>
+                <div class="payment-method" data-method="EWALLET">
+                    <div class="payment-method-icon">📱</div>
+                    <div class="payment-method-name">E-Wallet</div>
+                </div>
+            </div>
+
+            <button class="btn-complete-order" id="btnCompleteOrder" disabled>Order Completed</button>
+        </div>
+    </div>
+</div>
+
+<!-- Receipt Modal -->
+<div class="receipt-modal" id="receiptModal">
+    <div class="receipt-content">
+        <div class="receipt-header">
+            <div class="receipt-icon">✓</div>
+            <div class="receipt-title">THANK YOU</div>
+            <div class="receipt-message">Payment Success!</div>
+            <div class="receipt-submessage">Your payment was successful.</div>
+        </div>
+
+        <div class="receipt-details" id="receiptDetails">
+            <!-- Receipt details will be populated by JavaScript -->
+        </div>
+
+        <div class="receipt-actions">
+            <button class="btn-receipt btn-print" onclick="printReceipt()">Print</button>
+            <button class="btn-receipt btn-continue" onclick="closeReceipt()">Continue</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Helper function to format datetime
+    function formatDateTime(dateString) {
+        if (!dateString) return 'N/A';
+        try {
+            const date = new Date(dateString);
+            const day = date.getDate();
+            const month = date.getMonth() + 1;
+            const year = date.getFullYear();
+            let hours = date.getHours();
+            const minutes = date.getMinutes().toString().padStart(2, '0');
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12 || 12;
+            
+            return `${day}/${month}/${year} ${hours}:${minutes}${ampm}`;
+        } catch (e) {
+            return dateString;
+        }
+    }
+
+    // Format all sales dates on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        const salesRows = document.querySelectorAll('#salesTableBody tr');
+        salesRows.forEach(row => {
+            const dateCell = row.cells[2]; // Sales Date is the 3rd column (index 2)
+            if (dateCell && dateCell.textContent.trim()) {
+                dateCell.textContent = formatDateTime(dateCell.textContent.trim());
+            }
+        });
+    });
+
+    // Global variables
+    let cart = {};
+    let selectedPaymentMethod = null;
+    let currentSale = null;
+
+    // Check URL parameter for view
+    const urlParams = new URLSearchParams(window.location.search);
+    const viewParam = urlParams.get('view');
+
+    if (viewParam === 'new') {
+        showNewSalesView();
+    }
+
+    // Category filtering
+    document.querySelectorAll('.category-tab-pos').forEach(tab => {
+        tab.addEventListener('click', function() {
+            document.querySelectorAll('.category-tab-pos').forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            
+            const category = this.dataset.category;
+            const rows = document.querySelectorAll('#productsTableBody tr');
+            
+            rows.forEach(row => {
+                if (category === 'all' || row.dataset.category === category) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    });
+
+    // Payment method selection
+    document.querySelectorAll('.payment-method').forEach(method => {
+        method.addEventListener('click', function() {
+            document.querySelectorAll('.payment-method').forEach(m => m.classList.remove('selected'));
+            this.classList.add('selected');
+            selectedPaymentMethod = this.dataset.method;
+            updateOrderButton();
+        });
+    });
+
+    // Cart functions
+    function addToCart(productId, productName, price) {
+        if (!cart[productId]) {
+            cart[productId] = {
+                name: productName,
+                price: parseFloat(price),
+                quantity: 0
+            };
+        }
+        cart[productId].quantity++;
+        updateCart();
+    }
+
+    function removeFromCart(productId) {
+        if (cart[productId]) {
+            cart[productId].quantity--;
+            if (cart[productId].quantity <= 0) {
+                delete cart[productId];
+            }
+            updateCart();
+        }
+    }
+
+    function updateCart() {
+        const cartItemsContainer = document.getElementById('cartItems');
+        const cartKeys = Object.keys(cart);
+
+        if (cartKeys.length === 0) {
+            cartItemsContainer.innerHTML = '<p style="text-align: center; color: #999; margin-top: 40px;">No items in cart</p>';
+        } else {
+            let html = '';
+            cartKeys.forEach(productId => {
+                const item = cart[productId];
+                html += `
+                    <div class="cart-item">
+                        <div class="cart-item-icon">🥤</div>
+                        <div class="cart-item-details">
+                            <div class="cart-item-name">${item.name}</div>
+                            <div class="cart-item-quantity">x${item.quantity}</div>
+                        </div>
+                        <div class="cart-item-price">RM ${(item.price * item.quantity).toFixed(2)}</div>
+                    </div>
+                `;
+            });
+            cartItemsContainer.innerHTML = html;
+        }
+
+        updateTotals();
+        updateOrderButton();
+    }
+
+    function updateTotals() {
+        let total = 0;
+        Object.values(cart).forEach(item => {
+            total += item.price * item.quantity;
+        });
+
+        const tax = total * 0.05;
+        const subtotal = total + tax;
+
+        document.getElementById('cartTotal').textContent = `RM ${total.toFixed(2)}`;
+        document.getElementById('cartTax').textContent = `RM ${tax.toFixed(2)}`;
+        document.getElementById('cartSubtotal').textContent = `RM ${subtotal.toFixed(2)}`;
+    }
+
+    function updateOrderButton() {
+        const btn = document.getElementById('btnCompleteOrder');
+        const hasItems = Object.keys(cart).length > 0;
+        const hasPayment = selectedPaymentMethod !== null;
+
+        btn.disabled = !(hasItems && hasPayment);
+    }
+
+    // Complete order
+    document.getElementById('btnCompleteOrder').addEventListener('click', async function() {
+        if (this.disabled) return;
+
+        try {
+            // Prepare sale data
+            const items = [];
+            let totalAmount = 0;
+
+            Object.entries(cart).forEach(([productId, item]) => {
+                const subtotal = item.price * item.quantity;
+                items.push({
+                    product_id: productId,
+                    quantity: item.quantity,
+                    unit_price: item.price,
+                    subtotal: subtotal
+                });
+                totalAmount += subtotal;
+            });
+
+            // Add tax
+            const tax = totalAmount * 0.05;
+            totalAmount += tax;
+
+            const saleData = {
+                payment_method: selectedPaymentMethod,
+                total_amount: totalAmount,
+                items: items
+            };
+
+            // Submit to backend
+            const response = await fetch('{% url "api_create_sale" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify(saleData)
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                currentSale = result.sale;
+                showReceipt(result.sale);
+                // Clear cart
+                cart = {};
+                selectedPaymentMethod = null;
+                document.querySelectorAll('.payment-method').forEach(m => m.classList.remove('selected'));
+                updateCart();
+            } else {
+                alert('Error creating sale: ' + result.error);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred while processing the sale.');
+        }
+    });
+
+    function showReceipt(sale) {
+        const receiptDetails = document.getElementById('receiptDetails');
+        
+        const date = new Date(sale.sales_date);
+        const formattedDate = date.toLocaleDateString('en-MY', {
+            weekday: 'short',
+            month: 'short',
+            day: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
+
+        let itemsHtml = '';
+        sale.items.forEach(item => {
+            itemsHtml += `
+                <div class="receipt-item">
+                    <span class="receipt-item-name">${item.product_name}</span>
+                    <span>x${item.quantity}</span>
+                    <span>RM ${item.subtotal.toFixed(2)}</span>
+                </div>
+            `;
+        });
+
+        const tax = (sale.total_amount * 0.05 / 1.05).toFixed(2);
+        const amount = (sale.total_amount - tax).toFixed(2);
+
+        receiptDetails.innerHTML = `
+            <div class="receipt-date">${formattedDate}</div>
+            
+            <div class="receipt-row">
+                <span>Payment method</span>
+                <span>${sale.payment_method}</span>
+            </div>
+            
+            <div class="receipt-row">
+                <span>Cashier Id</span>
+                <span>${sale.user_id}</span>
+            </div>
+            
+            <div class="receipt-row">
+                <span>Cashier Name</span>
+                <span>{{ user_email }}</span>
+            </div>
+            
+            <div class="receipt-row bold">
+                <span>Sale id</span>
+                <span>${sale.sale_id}</span>
+            </div>
+            
+            <div class="receipt-items">
+                ${itemsHtml}
+            </div>
+            
+            <div class="receipt-row">
+                <span>Amount</span>
+                <span>RM ${amount}</span>
+            </div>
+            
+            <div class="receipt-row">
+                <span>Tax</span>
+                <span>RM ${tax}</span>
+            </div>
+            
+            <div class="receipt-total">
+                Total<br>RM ${sale.total_amount.toFixed(2)}
+            </div>
+            
+            <div class="receipt-row" style="margin-top: 16px; padding-top: 16px; border-top: 1px dashed #ddd;">
+                <span>Operator</span>
+                <span>{{ user_email|truncatechars:20 }}</span>
+            </div>
+        `;
+
+        document.getElementById('receiptModal').classList.add('active');
+    }
+
+    function closeReceipt() {
+        document.getElementById('receiptModal').classList.remove('active');
+        window.location.href = '{% url "sales" %}';
+    }
+
+    function printReceipt() {
+        window.print();
+    }
+
+    function showNewSalesView() {
+        document.getElementById('salesListView').style.display = 'none';
+        document.getElementById('newSalesView').style.display = 'block';
+    }
+
+    // View receipt from sales list
+    document.addEventListener('click', async function(e) {
+        if (e.target.classList.contains('btn-view-receipt')) {
+            const saleId = e.target.dataset.id;
+            
+            try {
+                // Fetch sale details
+                const response = await fetch(`{% url "api_get_sale" %}?id=${saleId}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    showReceipt(result.sale);
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while fetching the receipt.');
+            }
+        }
+    });
+
+    // Delete sale
+    document.addEventListener('click', async function(e) {
+        if (e.target.classList.contains('btn-delete-sale')) {
+            if (!confirm('Are you sure you want to delete this sale?')) return;
+
+            const saleId = e.target.dataset.id;
+
+            try {
+                const response = await fetch('{% url "api_delete_sale" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({ id: saleId })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert(result.message);
+                    location.reload();
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while deleting the sale.');
+            }
+        }
+    });
+</script>
 {% endblock %}

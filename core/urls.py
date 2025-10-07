@@ -40,4 +40,9 @@ urlpatterns = [
     path('api/employee/update/', views.api_update_employee, name='api_update_employee'),
     path('api/employee/delete/', views.api_delete_employee, name='api_delete_employee'),
     path('api/employee/resend-invitation/', api_resend_invitation, name='api_resend_invitation'),
+    
+    # API endpoints - Sales
+    path('api/sale/create/', views.api_create_sale, name='api_create_sale'),
+    path('api/sale/get/', views.api_get_sale, name='api_get_sale'),
+    path('api/sale/delete/', views.api_delete_sale, name='api_delete_sale'),
 ]
