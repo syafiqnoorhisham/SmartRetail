@@ -1,0 +1,480 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report Print - SmartRetail</title>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: #f3f4f6;
+            padding: 40px 20px;
+        }
+
+        .print-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border: 3px solid #3b82f6;
+            border-radius: 8px;
+            padding: 40px;
+        }
+
+        .print-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .print-header h1 {
+            font-size: 28px;
+            color: #1f2937;
+            margin-bottom: 20px;
+        }
+
+        .company-info {
+            text-align: left;
+        }
+
+        .company-info p {
+            font-size: 13px;
+            color: #6b7280;
+            line-height: 1.6;
+        }
+
+        .company-info strong {
+            color: #1f2937;
+        }
+
+        .company-logo {
+            text-align: right;
+        }
+
+        .company-logo h2 {
+            font-size: 32px;
+            color: #1f2937;
+        }
+
+        .company-logo span {
+            color: #10b981;
+        }
+
+        .report-metadata {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .metadata-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .metadata-label {
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .metadata-value {
+            color: #6b7280;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 16px;
+        }
+
+        .print-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        .print-table th {
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            color: #6b7280;
+            padding: 10px 8px;
+            border-bottom: 2px solid #e5e7eb;
+            background-color: #f9fafb;
+        }
+
+        .print-table td {
+            padding: 10px 8px;
+            font-size: 13px;
+            color: #1f2937;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .print-table tbody tr:nth-child(even) {
+            background-color: #f9fafb;
+        }
+
+        .increase-green {
+            color: #10b981;
+            font-weight: 500;
+        }
+
+        .chart-container {
+            margin: 30px 0;
+            padding: 20px;
+            background-color: #f9fafb;
+            border-radius: 8px;
+        }
+
+        .chart-canvas {
+            position: relative;
+            height: 250px;
+        }
+
+        .total-sales-section {
+            background-color: #f9fafb;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+
+        .total-sales-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 16px;
+        }
+
+        .total-sales-item {
+            background: white;
+            padding: 16px;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .total-sales-item.highlight {
+            background-color: #dbeafe;
+            border: 2px solid #2563eb;
+        }
+
+        .total-sales-label {
+            font-size: 13px;
+            color: #6b7280;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .total-sales-value {
+            font-size: 20px;
+            color: #1f2937;
+            font-weight: 700;
+        }
+
+        .total-sales-item.highlight .total-sales-value {
+            color: #2563eb;
+        }
+
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 30px;
+        }
+
+        .action-button {
+            padding: 12px 32px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .back-button {
+            background-color: #10b981;
+            color: white;
+        }
+
+        .back-button:hover {
+            background-color: #059669;
+        }
+
+        .print-button {
+            background-color: #10b981;
+            color: white;
+        }
+
+        .print-button:hover {
+            background-color: #059669;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            .print-container {
+                border: none;
+                padding: 20px;
+            }
+
+            .action-buttons {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .print-container {
+                padding: 20px;
+            }
+
+            .print-header {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .company-logo {
+                text-align: left;
+            }
+
+            .total-sales-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="print-container">
+        <!-- Header -->
+        <div class="print-header">
+            <div class="company-info">
+                <h1>REPORT</h1>
+                <p><strong>Report</strong></p>
+                <p><strong>SmartRetail Solutions Sdn Bhd</strong></p>
+                <p>Menara Exchange, 106, Lingkaran TRX,</p>
+                <p>Level 29, 55188 Kuala Lumpur,</p>
+                <p>Wilayah Persekutuan Kuala Lumpur</p>
+            </div>
+            <div class="company-logo">
+                <h2>Smart<span>Retail</span></h2>
+            </div>
+        </div>
+
+        <!-- Metadata -->
+        <div class="report-metadata">
+            <div class="metadata-item">
+                <span class="metadata-label">ReportId #</span>
+                <span class="metadata-value">{{ report_metadata.report_id }}</span>
+            </div>
+            <div class="metadata-item">
+                <span class="metadata-label">Report date</span>
+                <span class="metadata-value">{{ report_metadata.date }}</span>
+            </div>
+            <div class="metadata-item">
+                <span class="metadata-label">Reference</span>
+                <span class="metadata-value">{{ report_metadata.reference }}</span>
+            </div>
+        </div>
+
+        <!-- Best Selling Product -->
+        <div class="section">
+            <h3 class="section-title">Best selling product</h3>
+            {% if best_products %}
+            <table class="print-table">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Product ID</th>
+                        <th>Category</th>
+                        <th style="text-align: right;">Total sold</th>
+                        <th style="text-align: right;">Turn Over</th>
+                        <th style="text-align: right;">Increase By</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in best_products %}
+                    <tr>
+                        <td>{{ product.product_name }}</td>
+                        <td>{{ product.product_id }}</td>
+                        <td>{{ product.category }}</td>
+                        <td style="text-align: right;">{{ product.total_sold }}</td>
+                        <td style="text-align: right;">{{ product.turnover }}</td>
+                        <td style="text-align: right;" class="increase-green">{{ product.increase_by }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p style="color: #6b7280; text-align: center; padding: 20px;">No product data available</p>
+            {% endif %}
+        </div>
+
+        <!-- Profit & Revenue Chart -->
+        <div class="section">
+            <h3 class="section-title">Profit & Revenue</h3>
+            <div class="chart-container">
+                <div class="chart-canvas">
+                    <canvas id="printChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Best Selling Category -->
+        <div class="section">
+            <h3 class="section-title">Best selling category</h3>
+            {% if best_categories %}
+            <table class="print-table">
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th style="text-align: right;">Turn Over</th>
+                        <th style="text-align: right;">Increase By</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for category in best_categories %}
+                    <tr>
+                        <td>{{ category.category }}</td>
+                        <td style="text-align: right;">{{ category.turnover }}</td>
+                        <td style="text-align: right;" class="increase-green">{{ category.increase_by }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p style="color: #6b7280; text-align: center; padding: 20px;">No category data available</p>
+            {% endif %}
+        </div>
+
+        <!-- Total Sales -->
+        <div class="total-sales-section">
+            <h3 class="section-title">TOTAL SALE</h3>
+            <div class="total-sales-grid">
+                <div class="total-sales-item">
+                    <div class="total-sales-label">Today</div>
+                    <div class="total-sales-value">{{ total_today }}</div>
+                </div>
+                <div class="total-sales-item">
+                    <div class="total-sales-label">This week</div>
+                    <div class="total-sales-value">{{ total_week }}</div>
+                </div>
+                <div class="total-sales-item highlight">
+                    <div class="total-sales-label">This Month</div>
+                    <div class="total-sales-value">{{ total_month }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <button class="action-button back-button" onclick="window.close()">Back</button>
+            <button class="action-button print-button" onclick="window.print()">Print</button>
+        </div>
+    </div>
+
+    <script>
+        // Chart.js configuration for print view
+        const ctx = document.getElementById('printChart').getContext('2d');
+        
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: {{ chart_data.labels|safe }},
+                datasets: [
+                    {
+                        label: 'Revenue',
+                        data: {{ chart_data.revenue|safe }},
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 3,
+                        pointHoverRadius: 5
+                    },
+                    {
+                        label: 'Profit',
+                        data: {{ chart_data.profit|safe }},
+                        borderColor: '#f59e0b',
+                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 3,
+                        pointHoverRadius: 5
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 15,
+                            font: {
+                                size: 11
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                label += 'RM' + context.parsed.y.toLocaleString('en-MY', {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2
+                                });
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return 'RM' + value.toLocaleString('en-MY');
+                            },
+                            font: {
+                                size: 10
+                            }
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            font: {
+                                size: 10
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

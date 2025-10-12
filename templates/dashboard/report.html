@@ -1,11 +1,496 @@
 {% extends "dashboard/base.html" %}
+{% load static %}
 
 {% block title %}Report - SmartRetail{% endblock %}
 {% block page_title %}REPORT{% endblock %}
 
+{% block extra_css %}
+<style>
+    .report-container {
+        padding: 24px;
+        max-width: 1400px;
+    }
+
+    .report-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+    }
+
+    .print-button {
+        background-color: #10b981;
+        color: white;
+        border: none;
+        padding: 10px 24px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: background-color 0.2s;
+    }
+
+    .print-button:hover {
+        background-color: #059669;
+    }
+
+    .report-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        margin-bottom: 24px;
+    }
+
+    .report-card {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .report-card h3 {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 16px;
+        color: #1f2937;
+    }
+
+    .report-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .report-table th {
+        text-align: left;
+        font-size: 13px;
+        font-weight: 500;
+        color: #6b7280;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .report-table td {
+        padding: 12px 0;
+        font-size: 14px;
+        color: #1f2937;
+        border-bottom: 1px solid #f3f4f6;
+    }
+
+    .report-table tbody tr:nth-child(even) {
+        background-color: #f9fafb;
+    }
+
+    .report-table tbody tr:hover {
+        background-color: #f3f4f6;
+    }
+
+    .quantity-red {
+        color: #ef4444;
+        font-weight: 500;
+    }
+
+    .increase-green {
+        color: #10b981;
+        font-weight: 500;
+    }
+
+    .chart-container {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        margin-bottom: 24px;
+    }
+
+    .chart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+    }
+
+    .chart-header h3 {
+        font-size: 18px;
+        font-weight: 600;
+        color: #1f2937;
+    }
+
+    .chart-toggle {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        color: #6b7280;
+    }
+
+    .chart-toggle input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        cursor: pointer;
+    }
+
+    .chart-canvas {
+        position: relative;
+        height: 300px;
+    }
+
+    .products-table-container {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        margin-bottom: 24px;
+    }
+
+    .products-table-container h3 {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 16px;
+        color: #1f2937;
+    }
+
+    .products-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .products-table th {
+        text-align: left;
+        font-size: 13px;
+        font-weight: 500;
+        color: #6b7280;
+        padding: 12px 8px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .products-table td {
+        padding: 12px 8px;
+        font-size: 14px;
+        color: #1f2937;
+        border-bottom: 1px solid #f3f4f6;
+    }
+
+    .products-table tbody tr:nth-child(even) {
+        background-color: #f9fafb;
+    }
+
+    .products-table tbody tr:hover {
+        background-color: #f3f4f6;
+    }
+
+    .total-sales-container {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .total-sales-container h3 {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 16px;
+        color: #1f2937;
+    }
+
+    .total-sales-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .total-sales-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px;
+        border-radius: 8px;
+        background-color: #f9fafb;
+    }
+
+    .total-sales-item.highlight {
+        background-color: #dbeafe;
+        border: 1px solid #2563eb;
+    }
+
+    .total-sales-label {
+        font-size: 14px;
+        color: #6b7280;
+        font-weight: 500;
+    }
+
+    .total-sales-value {
+        font-size: 16px;
+        color: #1f2937;
+        font-weight: 600;
+    }
+
+    .total-sales-item.highlight .total-sales-value {
+        color: #2563eb;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 40px;
+        color: #6b7280;
+    }
+
+    @media (max-width: 768px) {
+        .report-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .report-container {
+            padding: 16px;
+        }
+
+        .chart-canvas {
+            height: 250px;
+        }
+
+        .products-table {
+            font-size: 12px;
+        }
+
+        .products-table th,
+        .products-table td {
+            padding: 8px 4px;
+        }
+    }
+
+    @media print {
+        .sidebar,
+        .header,
+        .print-button {
+            display: none;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="coming-soon">
-    <h2>Reports & Analytics</h2>
-    <p>This section is under development.</p>
+<div class="report-container">
+    <!-- Header with Print Button -->
+    <div class="report-header">
+        <div></div>
+        <button class="print-button" onclick="openPrintView()">Print Report</button>
+    </div>
+
+    <!-- Top Section: Low Stock and Best Selling Category -->
+    <div class="report-grid">
+        <!-- Low Stock Card -->
+        <div class="report-card">
+            <h3>Low Stock</h3>
+            {% if low_stock %}
+            <table class="report-table">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th style="text-align: right;">Quantity</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in low_stock %}
+                    <tr>
+                        <td>{{ item.product_name }}</td>
+                        <td style="text-align: right;" class="quantity-red">{{ item.quantity }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state">
+                <p>No low stock products</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Best Selling Category Card -->
+        <div class="report-card">
+            <h3>Best selling category</h3>
+            {% if best_categories %}
+            <table class="report-table">
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th style="text-align: right;">Turn Over</th>
+                        <th style="text-align: right;">Increase By</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in best_categories %}
+                    <tr>
+                        <td>{{ item.category }}</td>
+                        <td style="text-align: right;">{{ item.turnover }}</td>
+                        <td style="text-align: right;" class="increase-green">{{ item.increase_by }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state">
+                <p>No category data available</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Profit & Revenue Chart -->
+    <div class="chart-container">
+        <div class="chart-header">
+            <h3>Profit & Revenue</h3>
+            <div class="chart-toggle">
+                <input type="checkbox" id="weeklyToggle">
+                <label for="weeklyToggle">Weekly</label>
+            </div>
+        </div>
+        <div class="chart-canvas">
+            <canvas id="profitRevenueChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Best Selling Product Table -->
+    <div class="products-table-container">
+        <h3>Best selling product</h3>
+        {% if best_products %}
+        <table class="products-table">
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Product ID</th>
+                    <th>Category</th>
+                    <th style="text-align: right;">Total sold</th>
+                    <th style="text-align: right;">Turn Over</th>
+                    <th style="text-align: right;">Increase By</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in best_products %}
+                <tr>
+                    <td>{{ product.product_name }}</td>
+                    <td>{{ product.product_id }}</td>
+                    <td>{{ product.category }}</td>
+                    <td style="text-align: right;">{{ product.total_sold }}</td>
+                    <td style="text-align: right;">{{ product.turnover }}</td>
+                    <td style="text-align: right;" class="increase-green">{{ product.increase_by }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <p>No product sales data available</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Total Sales Summary -->
+    <div class="total-sales-container">
+        <h3>Total Sales</h3>
+        <div class="total-sales-list">
+            <div class="total-sales-item">
+                <span class="total-sales-label">Today</span>
+                <span class="total-sales-value">{{ total_today }}</span>
+            </div>
+            <div class="total-sales-item">
+                <span class="total-sales-label">This week</span>
+                <span class="total-sales-value">{{ total_week }}</span>
+            </div>
+            <div class="total-sales-item highlight">
+                <span class="total-sales-label">This Month</span>
+                <span class="total-sales-value">{{ total_month }}</span>
+            </div>
+        </div>
+    </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Chart.js configuration
+    const ctx = document.getElementById('profitRevenueChart').getContext('2d');
+    
+    const chartLabels = {{ chart_data.labels|safe }};
+    const chartRevenue = {{ chart_data.revenue|safe }};
+    const chartProfit = {{ chart_data.profit|safe }};
+    
+    const profitRevenueChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: chartLabels,
+            datasets: [
+                {
+                    label: 'Revenue',
+                    data: chartRevenue,
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                },
+                {
+                    label: 'Profit',
+                    data: chartProfit,
+                    borderColor: '#f59e0b',
+                    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        usePointStyle: true,
+                        padding: 20
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            label += 'RM' + context.parsed.y.toLocaleString('en-MY', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            });
+                            return label;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return 'RM' + value.toLocaleString('en-MY');
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Weekly toggle (placeholder functionality)
+    document.getElementById('weeklyToggle').addEventListener('change', function(e) {
+        if (e.target.checked) {
+            console.log('Weekly view not implemented yet');
+            // You can implement weekly data fetching here
+        }
+    });
+
+    // Print functionality
+    function openPrintView() {
+        const printWindow = window.open('/report/print/', '_blank', 'width=800,height=600');
+    }
+</script>
 {% endblock %}

@@ -6,12 +6,22 @@ from django.views.decorators.csrf import csrf_exempt
 import json
 import base64
 import re
+from django.core.serializers.json import DjangoJSONEncoder
 from .supabase_client import get_supabase_client
 from .utils.supabase_queries import (
     get_dashboard_metrics,
     get_products_by_category,
     get_all_categories,
     search_products
+)
+from .utils.report_queries import (
+    get_best_selling_products,
+    get_best_selling_categories,
+    get_low_stock_products,
+    get_total_sales,
+    get_profit_revenue_trend,
+    get_report_date,
+    get_report_metadata
 )
 import logging
 
@@ -460,16 +470,122 @@ def suppliers_view(request):
 
 
 def report_view(request):
-    """Display report page"""
+    """Display report page with analytics"""
     if not request.session.get('user_id'):
         messages.warning(request, 'Please login to access reports.')
         return redirect('login')
     
-    context = {
-        'user_email': request.session.get('user_email', 'User'),
-    }
+    try:
+        # Get all report data
+        best_products = get_best_selling_products(limit=10)
+        best_categories = get_best_selling_categories(limit=3)
+        low_stock = get_low_stock_products(limit=3)
+        
+        # Get total sales for different periods
+        total_today = get_total_sales('today')
+        total_week = get_total_sales('week')
+        total_month = get_total_sales('month')
+        
+        # Get chart data
+        chart_data = get_profit_revenue_trend(months=7)
+        
+        # Get report metadata
+        report_date = get_report_date()
+        report_metadata = get_report_metadata()
+        
+        # Serialize chart data as JSON for template
+        chart_data_json = json.dumps(chart_data, cls=DjangoJSONEncoder)
+        
+        context = {
+            'user_email': request.session.get('user_email', 'User'),
+            'best_products': best_products,
+            'best_categories': best_categories,
+            'low_stock': low_stock,
+            'total_today': total_today,
+            'total_week': total_week,
+            'total_month': total_month,
+            'chart_data': chart_data,
+            'chart_data_json': chart_data_json,
+            'report_date': report_date,
+            'report_metadata': report_metadata,
+        }
+        
+        return render(request, 'dashboard/report.html', context)
+        
+    except Exception as e:
+        logger.error(f"Report view error: {str(e)}")
+        messages.error(request, 'Error loading report data.')
+        
+        # Return with empty context
+        context = {
+            'user_email': request.session.get('user_email', 'User'),
+            'best_products': [],
+            'best_categories': [],
+            'low_stock': [],
+            'total_today': 'RM0.00',
+            'total_week': 'RM0.00',
+            'total_month': 'RM0.00',
+            'chart_data': {'labels': [], 'revenue': [], 'profit': []},
+            'report_date': get_report_date(),
+            'report_metadata': get_report_metadata(),
+        }
+        
+        return render(request, 'dashboard/report.html', context)
+
+
+def report_print_view(request):
+    """Display printable report page"""
+    if not request.session.get('user_id'):
+        messages.warning(request, 'Please login to access reports.')
+        return redirect('login')
     
-    return render(request, 'dashboard/report.html', context)
+    try:
+        # Get all report data (same as regular report view)
+        best_products = get_best_selling_products(limit=10)
+        best_categories = get_best_selling_categories(limit=3)
+        
+        # Get total sales for different periods
+        total_today = get_total_sales('today')
+        total_week = get_total_sales('week')
+        total_month = get_total_sales('month')
+        
+        # Get chart data
+        chart_data = get_profit_revenue_trend(months=7)
+        
+        # Get report metadata
+        report_metadata = get_report_metadata()
+        
+        # Serialize chart data as JSON for template
+        chart_data_json = json.dumps(chart_data, cls=DjangoJSONEncoder)
+        
+        context = {
+            'best_products': best_products,
+            'best_categories': best_categories,
+            'total_today': total_today,
+            'total_week': total_week,
+            'total_month': total_month,
+            'chart_data': chart_data,
+            'chart_data_json': chart_data_json,
+            'report_metadata': report_metadata,
+        }
+        
+        return render(request, 'dashboard/report_print.html', context)
+        
+    except Exception as e:
+        logger.error(f"Report print view error: {str(e)}")
+        
+        # Return with empty context
+        context = {
+            'best_products': [],
+            'best_categories': [],
+            'total_today': 'RM0.00',
+            'total_week': 'RM0.00',
+            'total_month': 'RM0.00',
+            'chart_data': {'labels': [], 'revenue': [], 'profit': []},
+            'report_metadata': get_report_metadata(),
+        }
+        
+        return render(request, 'dashboard/report_print.html', context)
 
 
 # API Endpoints for AJAX requests

@@ -28,6 +28,7 @@ urlpatterns = [
     path('employees/', views.employees_view, name='employees'),
     path('suppliers/', views.suppliers_view, name='suppliers'),
     path('report/', views.report_view, name='report'),
+    path('report/print/', views.report_print_view, name='report_print'),
     
     # API endpoints - Products
     path('api/metrics/', views.api_dashboard_metrics, name='api_dashboard_metrics'),
