@@ -25,10 +25,6 @@
        class="role-tab {% if selected_role == 'Manager' %}active{% endif %}">
         Manager <span class="tab-count">({{ role_counts.Manager|default:0 }})</span>
     </a>
-    <a href="?role=Supplier" 
-       class="role-tab {% if selected_role == 'Supplier' %}active{% endif %}">
-        Supplier <span class="tab-count">({{ role_counts.Supplier|default:0 }})</span>
-    </a>
     <a href="?role=Sales" 
        class="role-tab {% if selected_role == 'Sales' %}active{% endif %}">
         Sales <span class="tab-count">({{ role_counts.Sales|default:0 }})</span>
@@ -224,7 +220,6 @@
                 <select id="employeeRole" name="role" class="form-select" required>
                     <option value="">Select role</option>
                     <option value="Manager">Manager</option>
-                    <option value="Supplier">Supplier</option>
                     <option value="Sales">Sales</option>
                 </select>
             </div>
@@ -320,7 +315,6 @@
                 <label for="editEmployeeRole">ROLE <span class="required">*</span></label>
                 <select id="editEmployeeRole" name="role" class="form-select" required>
                     <option value="Manager">Manager</option>
-                    <option value="Supplier">Supplier</option>
                     <option value="Sales">Sales</option>
                 </select>
             </div>
@@ -592,11 +586,6 @@
 .role-badge.manager {
     background: #E8F5E9;
     color: #2E7D32;
-}
-
-.role-badge.supplier {
-    background: #FFF3E0;
-    color: #E65100;
 }
 
 .role-badge.sales {

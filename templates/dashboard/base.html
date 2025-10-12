@@ -40,18 +40,18 @@
                     <span class="icon">📦</span>
                     <span>Inventory</span>
                 </a>
+                {% if permissions.view_employees %}
                 <a href="{% url 'employees' %}" class="nav-item {% if request.resolver_match.url_name == 'employees' %}active{% endif %}">
                     <span class="icon">👥</span>
                     <span>Employees</span>
                 </a>
-                <a href="{% url 'suppliers' %}" class="nav-item {% if request.resolver_match.url_name == 'suppliers' %}active{% endif %}">
-                    <span class="icon">🚚</span>
-                    <span>Suppliers</span>
-                </a>
+                {% endif %}
+                {% if permissions.view_reports %}
                 <a href="{% url 'report' %}" class="nav-item {% if request.resolver_match.url_name == 'report' %}active{% endif %}">
                     <span class="icon">📈</span>
                     <span>Report</span>
                 </a>
+                {% endif %}
             </nav>
             
             <div class="sidebar-footer">

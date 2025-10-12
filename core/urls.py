@@ -26,7 +26,7 @@ urlpatterns = [
     path('inventory/', views.inventory_view, name='inventory'),
     path('sales/', views.sales_view, name='sales'),
     path('employees/', views.employees_view, name='employees'),
-    path('suppliers/', views.suppliers_view, name='suppliers'),
+    # path('suppliers/', views.suppliers_view, name='suppliers'),  # Removed - no longer needed
     path('report/', views.report_view, name='report'),
     path('report/print/', views.report_print_view, name='report_print'),
     

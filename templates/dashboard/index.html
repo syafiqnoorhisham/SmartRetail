@@ -6,7 +6,7 @@
 
 {% block content %}
 <!-- Metrics Cards -->
-<div class="metrics-grid">
+<div class="metrics-grid{% if not permissions.view_employee_stats %} two-column{% endif %}">
     <!-- Daily Sales Card -->
     <div class="metric-card">
         <div class="metric-header">
@@ -41,7 +41,8 @@
         <canvas id="itemsSparkline" class="sparkline"></canvas>
     </div>
     
-    <!-- Employee Card -->
+    <!-- Employee Card - Only visible to Manager -->
+    {% if permissions.view_employee_stats %}
     <div class="metric-card">
         <div class="metric-header">
             <h3>Employee</h3>
@@ -54,6 +55,7 @@
         </div>
         <canvas id="employeeSparkline" class="sparkline"></canvas>
     </div>
+    {% endif %}
 </div>
 
 <!-- Second Row: Stock Notification and Sales Trend -->
@@ -90,7 +92,7 @@
         </div>
     </div>
     
-    <!-- Sales Trend Chart -->
+    <!-- Sales Trend Chart - Always visible for all users -->
     <div class="sales-trend-panel">
         <canvas id="salesTrendChart"></canvas>
     </div>
@@ -194,7 +196,8 @@ new Chart(itemsCtx, {
     }
 });
 
-// Employee Sparkline
+// Employee Sparkline (only if element exists)
+{% if permissions.view_employee_stats %}
 const employeeCtx = document.getElementById('employeeSparkline').getContext('2d');
 new Chart(employeeCtx, {
     ...sparklineConfig,
@@ -205,8 +208,9 @@ new Chart(employeeCtx, {
         }]
     }
 });
+{% endif %}
 
-// Sales Trend Bar Chart
+// Sales Trend Bar Chart - Always visible
 const salesTrendCtx = document.getElementById('salesTrendChart').getContext('2d');
 const salesTrendData = {{ sales_trend|safe }};
 

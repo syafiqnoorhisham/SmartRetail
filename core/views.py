@@ -23,6 +23,12 @@ from .utils.report_queries import (
     get_report_date,
     get_report_metadata
 )
+from .utils.rbac import (
+    get_user_role,
+    require_role,
+    check_permission,
+    add_permissions_to_context
+)
 import logging
 
 logger = logging.getLogger(__name__)
@@ -252,15 +258,27 @@ def dashboard_view(request):
         # Get all dashboard metrics
         metrics = get_dashboard_metrics()
         
+        # Get user role for permission checking
+        user_role = get_user_role(request)
+        
+        # Hide employee stats for Sales role
+        if user_role == 'Sales':
+            employee_data = {'active': 0, 'total': 0, 'hidden': True}
+        else:
+            employee_data = metrics['employees']
+        
         context = {
             'user_email': request.session.get('user_email', 'User'),
             'sales_data': metrics['sales'],
             'items_data': metrics['items'],
-            'employee_data': metrics['employees'],
+            'employee_data': employee_data,
             'low_stock_products': metrics['low_stock'],
             'recent_transactions': metrics['recent_transactions'],
             'sales_trend': metrics['sales_trend'],
         }
+        
+        # Add permissions to context
+        context = add_permissions_to_context(request, context)
         
         return render(request, 'dashboard/index.html', context)
         
@@ -278,6 +296,9 @@ def dashboard_view(request):
             'recent_transactions': [],
             'sales_trend': [],
         }
+        
+        # Add permissions even on error
+        context = add_permissions_to_context(request, context)
         
         return render(request, 'dashboard/index.html', context)
 
@@ -337,6 +358,9 @@ def inventory_view(request):
             'total_products': len(all_products),
         }
         
+        # Add permissions to context
+        context = add_permissions_to_context(request, context)
+        
         return render(request, 'dashboard/inventory.html', context)
         
     except Exception as e:
@@ -381,6 +405,9 @@ def sales_view(request):
             'categories': categories,
         }
         
+        # Add permissions to context
+        context = add_permissions_to_context(request, context)
+        
         return render(request, 'dashboard/sales.html', context)
         
     except Exception as e:
@@ -394,9 +421,13 @@ def sales_view(request):
             'categories': [],
         }
         
+        # Add permissions to context
+        context = add_permissions_to_context(request, context)
+        
         return render(request, 'dashboard/sales.html', context)
 
 
+@require_role(['Manager'])
 def employees_view(request):
     """Display employees page with role filtering and search"""
     if not request.session.get('user_id'):
@@ -448,6 +479,9 @@ def employees_view(request):
             'role_counts': role_counts,
         }
         
+        # Add permissions to context
+        context = add_permissions_to_context(request, context)
+        
         return render(request, 'dashboard/employees.html', context)
         
     except Exception as e:
@@ -456,19 +490,20 @@ def employees_view(request):
         return redirect('dashboard')
 
 
-def suppliers_view(request):
-    """Display suppliers page"""
-    if not request.session.get('user_id'):
-        messages.warning(request, 'Please login to access suppliers.')
-        return redirect('login')
-    
-    context = {
-        'user_email': request.session.get('user_email', 'User'),
-    }
-    
-    return render(request, 'dashboard/suppliers.html', context)
+# def suppliers_view(request):
+#     """Display suppliers page"""
+#     if not request.session.get('user_id'):
+#         messages.warning(request, 'Please login to access suppliers.')
+#         return redirect('login')
+#     
+#     context = {
+#         'user_email': request.session.get('user_email', 'User'),
+#     }
+#     
+#     return render(request, 'dashboard/suppliers.html', context)
 
 
+@require_role(['Manager'])
 def report_view(request):
     """Display report page with analytics"""
     if not request.session.get('user_id'):
@@ -510,6 +545,9 @@ def report_view(request):
             'report_metadata': report_metadata,
         }
         
+        # Add permissions to context
+        context = add_permissions_to_context(request, context)
+        
         return render(request, 'dashboard/report.html', context)
         
     except Exception as e:
@@ -530,9 +568,13 @@ def report_view(request):
             'report_metadata': get_report_metadata(),
         }
         
+        # Add permissions to context
+        context = add_permissions_to_context(request, context)
+        
         return render(request, 'dashboard/report.html', context)
 
 
+@require_role(['Manager'])
 def report_print_view(request):
     """Display printable report page"""
     if not request.session.get('user_id'):
@@ -884,7 +926,7 @@ def api_add_employee(request):
         if not re.match(email_regex, email):
             return JsonResponse({'error': 'Invalid email format'}, status=400)
         
-        if role not in ['Manager', 'Supplier', 'Sales']:
+        if role not in ['Manager', 'Sales']:
             return JsonResponse({'error': 'Invalid role'}, status=400)
         
         client = get_supabase_client()
@@ -989,7 +1031,7 @@ def api_update_employee(request):
         if not re.match(email_regex, email):
             return JsonResponse({'error': 'Invalid email format'}, status=400)
         
-        if role not in ['Manager', 'Supplier', 'Sales']:
+        if role not in ['Manager', 'Sales']:
             return JsonResponse({'error': 'Invalid role'}, status=400)
         
         client = get_supabase_client()

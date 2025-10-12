@@ -280,9 +280,26 @@ body {
    ======================================== */
 .metrics-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(3, 1fr);
     gap: 16px;
     margin-bottom: 24px;
+}
+
+/* Two-column layout when employee card is hidden - cards span full width */
+.metrics-grid.two-column {
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.metrics-grid.two-column .metric-card {
+    min-width: 0;
+}
+
+/* On mobile, stack cards vertically */
+@media (max-width: 767px) {
+    .metrics-grid.two-column {
+        grid-template-columns: 1fr !important;
+    }
 }
 
 .metric-card {
@@ -373,6 +390,11 @@ body {
     grid-template-columns: 1fr;
     gap: 16px;
     margin-bottom: 24px;
+}
+
+/* Full width when only stock notification is shown */
+.stock-notification-panel.full-width {
+    grid-column: 1 / -1;
 }
 
 /* ========================================
@@ -964,6 +986,11 @@ body {
         grid-template-columns: repeat(2, 1fr);
     }
     
+    /* Keep two-column layout on tablets - full width */
+    .metrics-grid.two-column {
+        grid-template-columns: 1fr 1fr;
+    }
+    
     .dashboard-row {
         grid-template-columns: 1fr 1fr;
     }
@@ -983,6 +1010,11 @@ body {
 @media (min-width: 1024px) {
     .metrics-grid {
         grid-template-columns: repeat(3, 1fr);
+    }
+    
+    /* Two-column layout for cards when employee is hidden */
+    .metrics-grid.two-column {
+        grid-template-columns: 1fr 1fr;
     }
     
     .dashboard-row {

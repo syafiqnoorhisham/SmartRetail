@@ -8,9 +8,15 @@
 {% block content %}
 <!-- Action Bar -->
 <div class="action-bar">
+    {% if permissions.manage_inventory %}
     <button class="btn-new-stock" id="btnNewStock">
         <span class="plus-icon">+</span> New Stock
     </button>
+    {% else %}
+    <div class="view-only-badge" style="background: #FFC107; color: #000; padding: 10px 20px; border-radius: 6px; font-size: 14px; font-weight: 500;">
+        👁️ View Only - Contact Manager to add or edit products
+    </div>
+    {% endif %}
 </div>
 
 <!-- Category Filter Tabs -->
@@ -106,6 +112,7 @@
                         </span>
                     </td>
                     <td class="actions">
+                        {% if permissions.manage_inventory %}
                         <button class="btn-edit-product" 
                                 data-id="{{ product.product_id }}"
                                 data-name="{{ product.name }}"
@@ -119,6 +126,9 @@
                                 data-id="{{ product.product_id }}"
                                 data-name="{{ product.name }}"
                                 title="Delete Product">🗑️</button>
+                        {% else %}
+                        <span style="color: #999; font-size: 12px;">🔒 View Only</span>
+                        {% endif %}
                     </td>
                 </tr>
                 {% empty %}
