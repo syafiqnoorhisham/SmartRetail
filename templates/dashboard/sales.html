@@ -611,7 +611,7 @@
                         <td>RM {{ product.price }}</td>
                         <td style="text-align: center;">
                             <div class="quantity-controls">
-                                <button class="btn-quantity" onclick="addToCart('{{ product.product_id }}', '{{ product.name }}', {{ product.price }})">+</button>
+                                <button class="btn-quantity" onclick="addToCart('{{ product.product_id }}', '{{ product.name }}', '{{ product.price }}',)">+</button>
                                 <button class="btn-quantity" onclick="removeFromCart('{{ product.product_id }}')">−</button>
                             </div>
                         </td>
