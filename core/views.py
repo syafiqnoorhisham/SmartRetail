@@ -576,15 +576,19 @@ def report_view(request):
 
 @require_role(['Manager'])
 def report_print_view(request):
-    """Display printable report page"""
+    """Display printable report page based on selected type"""
     if not request.session.get('user_id'):
         messages.warning(request, 'Please login to access reports.')
         return redirect('login')
     
     try:
-        # Get all report data (same as regular report view)
+        # Get report type from query parameter (default to 'overall')
+        report_type = request.GET.get('type', 'overall')
+        
+        # Get all report data
         best_products = get_best_selling_products(limit=10)
         best_categories = get_best_selling_categories(limit=3)
+        low_stock = get_low_stock_products(limit=3)
         
         # Get total sales for different periods
         total_today = get_total_sales('today')
@@ -594,6 +598,39 @@ def report_print_view(request):
         # Get chart data
         chart_data = get_profit_revenue_trend(months=7)
         
+        # Create monthly breakdown data for easy iteration with dynamic margin calculation
+        monthly_data = []
+        for i in range(len(chart_data['labels'])):
+            revenue = chart_data['revenue'][i]
+            profit = chart_data['profit'][i]
+            
+            # Calculate growth from previous month
+            growth = '-'
+            if i > 0:  # Not the first month
+                prev_revenue = chart_data['revenue'][i-1]
+                
+                if prev_revenue > 0:
+                    # Normal growth calculation (only when previous month had sales)
+                    growth_pct = ((revenue - prev_revenue) / prev_revenue) * 100
+                    if growth_pct >= 0:
+                        growth = f"+{growth_pct:.1f}%"
+                    else:
+                        growth = f"{growth_pct:.1f}%"
+            
+            # Calculate actual profit margin percentage (not hardcoded)
+            margin = '0%'
+            if revenue > 0:
+                margin_pct = (profit / revenue) * 100
+                margin = f"{margin_pct:.2f}%"  # Show 2 decimal places
+            
+            monthly_data.append({
+                'month': chart_data['labels'][i],
+                'revenue': revenue,
+                'profit': profit,
+                'growth': growth,
+                'margin': margin
+            })
+        
         # Get report metadata
         report_metadata = get_report_metadata()
         
@@ -601,12 +638,15 @@ def report_print_view(request):
         chart_data_json = json.dumps(chart_data, cls=DjangoJSONEncoder)
         
         context = {
+            'report_type': report_type,
             'best_products': best_products,
             'best_categories': best_categories,
+            'low_stock': low_stock,
             'total_today': total_today,
             'total_week': total_week,
             'total_month': total_month,
             'chart_data': chart_data,
+            'monthly_data': monthly_data,
             'chart_data_json': chart_data_json,
             'report_metadata': report_metadata,
         }
@@ -618,12 +658,15 @@ def report_print_view(request):
         
         # Return with empty context
         context = {
+            'report_type': request.GET.get('type', 'overall'),
             'best_products': [],
             'best_categories': [],
+            'low_stock': [],
             'total_today': 'RM0.00',
             'total_week': 'RM0.00',
             'total_month': 'RM0.00',
             'chart_data': {'labels': [], 'revenue': [], 'profit': []},
+            'monthly_data': [],
             'report_metadata': get_report_metadata(),
         }
         

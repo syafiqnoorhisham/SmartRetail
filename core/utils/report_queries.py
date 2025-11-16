@@ -249,6 +249,7 @@ def get_low_stock_products(limit=3):
     Returns list of dicts with:
     - product_name
     - quantity (formatted as current/threshold)
+    - current_stock (for charting)
     """
     try:
         client = get_supabase_client()
@@ -268,8 +269,10 @@ def get_low_stock_products(limit=3):
                 if current_stock <= low_stock_threshold:
                     low_stock.append({
                         'product_name': product['name'],
+                        'product_id': product.get('product_id', 'N/A'),
                         'quantity': f"{current_stock}/{low_stock_threshold}",
-                        'current_stock': current_stock
+                        'current_stock': current_stock,
+                        'low_stock_threshold': low_stock_threshold
                     })
         
         # Sort by current stock (ascending) and limit
@@ -318,12 +321,13 @@ def get_total_sales(period='today'):
 def get_profit_revenue_trend(months=7):
     """
     Generate monthly profit and revenue data for line chart
+    Calculate actual profit based on product costs (not hardcoded percentage)
     
     Args:
         months: Number of months to include (default 7)
     
     Returns:
-        Dict with labels and datasets for Chart.js
+        Dict with labels, revenue, profit, and costs arrays for Chart.js
     """
     try:
         client = get_supabase_client()
@@ -331,7 +335,9 @@ def get_profit_revenue_trend(months=7):
         
         # Generate month labels
         month_labels = []
-        month_data = []
+        month_revenue = []
+        month_costs = []
+        month_profit = []
         
         for i in range(months - 1, -1, -1):
             # Calculate the month
@@ -355,25 +361,58 @@ def get_profit_revenue_trend(months=7):
             month_start = month_date
             month_end = next_month - timedelta(seconds=1)
             
-            # Get sales for this month
+            # Get sales with items for this month
             sales = client.table('sales')\
-                .select('total_amount')\
+                .select('*, sales_items(*, products(*))')\
                 .eq('status', 'completed')\
                 .gte('sales_date', month_start.isoformat())\
                 .lte('sales_date', month_end.isoformat())\
                 .execute()
             
-            month_total = 0
+            # Calculate revenue and costs
+            total_revenue = 0
+            total_cost = 0
+            
             if sales.data:
                 for sale in sales.data:
-                    month_total += float(sale['total_amount'])
+                    sale_revenue = float(sale['total_amount'])
+                    sale_cost = 0
+                    
+                    # Add to revenue
+                    total_revenue += sale_revenue
+                    
+                    # Calculate cost from items
+                    if sale.get('sales_items') and len(sale['sales_items']) > 0:
+                        for item in sale['sales_items']:
+                            quantity = item['quantity']
+                            unit_price = item.get('unit_price', 0)
+                            
+                            # Use product cost if the field exists, otherwise estimate at 30% of unit price
+                            if item.get('products') and 'cost' in item['products'] and item['products']['cost']:
+                                item_cost = float(item['products']['cost']) * quantity
+                            else:
+                                # Fallback: estimate cost as 30% of selling price
+                                item_cost = float(unit_price) * quantity * 0.30
+                            
+                            sale_cost += item_cost
+                    else:
+                        # No items found - estimate cost as 30% of sale total (fallback for legacy data)
+                        sale_cost = sale_revenue * 0.30
+                    
+                    total_cost += sale_cost
             
-            month_data.append(month_total)
+            # Calculate profit
+            total_profit = total_revenue - total_cost
+            
+            month_revenue.append(round(total_revenue, 2))
+            month_costs.append(round(total_cost, 2))
+            month_profit.append(round(total_profit, 2))
         
         return {
             'labels': month_labels,
-            'revenue': month_data,
-            'profit': [int(x * 0.7) for x in month_data]  # Simulated profit (70% of revenue)
+            'revenue': month_revenue,
+            'costs': month_costs,
+            'profit': month_profit
         }
         
     except Exception as e:
@@ -381,6 +420,7 @@ def get_profit_revenue_trend(months=7):
         return {
             'labels': [],
             'revenue': [],
+            'costs': [],
             'profit': []
         }
 

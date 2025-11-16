@@ -16,6 +16,42 @@
         justify-content: space-between;
         align-items: center;
         margin-bottom: 24px;
+        gap: 16px;
+    }
+
+    .report-type-selector {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .report-type-selector label {
+        font-size: 14px;
+        font-weight: 500;
+        color: #1f2937;
+        white-space: nowrap;
+    }
+
+    .report-type-dropdown {
+        padding: 10px 16px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 14px;
+        color: #1f2937;
+        background-color: white;
+        cursor: pointer;
+        transition: border-color 0.2s;
+        min-width: 300px;
+    }
+
+    .report-type-dropdown:hover {
+        border-color: #10b981;
+    }
+
+    .report-type-dropdown:focus {
+        outline: none;
+        border-color: #10b981;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
     }
 
     .print-button {
@@ -243,6 +279,20 @@
             padding: 16px;
         }
 
+        .report-header {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .report-type-selector {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .report-type-dropdown {
+            min-width: 100%;
+        }
+
         .chart-canvas {
             height: 250px;
         }
@@ -269,9 +319,20 @@
 
 {% block content %}
 <div class="report-container">
-    <!-- Header with Print Button -->
+    <!-- Header with Report Type Selector and Print Button -->
     <div class="report-header">
-        <div></div>
+        <div class="report-type-selector">
+            <label for="reportType">Select Report Type:</label>
+            <select id="reportType" class="report-type-dropdown">
+                <option value="overall">Overall Report</option>
+                <option value="sales">Overall Sales Report - Sales, Profit & Revenue</option>
+                <option value="product">Overall Product Report - Best Selling, Low Stock</option>
+                <option value="sales_report">Sales Report</option>
+                <option value="profit_revenue_report">Profit & Revenue Report</option>
+                <option value="best_selling_report">Best Selling Product Report</option>
+                <option value="low_stock_report">Low Stock Product Report</option>
+            </select>
+        </div>
         <button class="print-button" onclick="openPrintView()">Print Report</button>
     </div>
 
@@ -409,18 +470,16 @@
     // Chart.js configuration
     const ctx = document.getElementById('profitRevenueChart').getContext('2d');
     
-    const chartLabels = {{ chart_data.labels|safe }};
-    const chartRevenue = {{ chart_data.revenue|safe }};
-    const chartProfit = {{ chart_data.profit|safe }};
+    const chartData = {{ chart_data_json|safe }};
     
     const profitRevenueChart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: chartLabels,
+            labels: chartData.labels,
             datasets: [
                 {
                     label: 'Revenue',
-                    data: chartRevenue,
+                    data: chartData.revenue,
                     borderColor: '#3b82f6',
                     backgroundColor: 'rgba(59, 130, 246, 0.1)',
                     tension: 0.4,
@@ -430,7 +489,7 @@
                 },
                 {
                     label: 'Profit',
-                    data: chartProfit,
+                    data: chartData.profit,
                     borderColor: '#f59e0b',
                     backgroundColor: 'rgba(245, 158, 11, 0.1)',
                     tension: 0.4,
@@ -490,7 +549,8 @@
 
     // Print functionality
     function openPrintView() {
-        const printWindow = window.open('/report/print/', '_blank', 'width=800,height=600');
+        const reportType = document.getElementById('reportType').value;
+        const printWindow = window.open(`/report/print/?type=${reportType}`, '_blank', 'width=800,height=600');
     }
 </script>
 {% endblock %}

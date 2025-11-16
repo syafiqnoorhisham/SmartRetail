@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Report Print - SmartRetail</title>
+    <title>{% if report_type == 'sales' %}Sales Report{% elif report_type == 'product' %}Product Report{% elif report_type == 'sales_report' %}Sales Report{% elif report_type == 'profit_revenue_report' %}Profit & Revenue Report{% elif report_type == 'best_selling_report' %}Best Selling Product Report{% elif report_type == 'low_stock_report' %}Low Stock Product Report{% else %}Overall Report{% endif %} - SmartRetail</title>
     
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -95,6 +95,60 @@
             color: #6b7280;
         }
 
+        .report-type-badge {
+            background-color: #dbeafe;
+            color: #1e40af;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .summary-card {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            padding: 20px;
+            border-radius: 8px;
+            color: white;
+        }
+
+        .summary-card.blue {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        }
+
+        .summary-card.orange {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+
+        .summary-card.red {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+
+        .summary-card-label {
+            font-size: 13px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+
+        .summary-card-value {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .summary-card-subtitle {
+            font-size: 11px;
+            opacity: 0.8;
+            margin-top: 4px;
+        }
+
         .section {
             margin-bottom: 30px;
         }
@@ -104,6 +158,8 @@
             font-weight: 600;
             color: #1f2937;
             margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e5e7eb;
         }
 
         .print-table {
@@ -138,8 +194,13 @@
             font-weight: 500;
         }
 
+        .quantity-red {
+            color: #ef4444;
+            font-weight: 500;
+        }
+
         .chart-container {
-            margin: 30px 0;
+            margin: 20px 0;
             padding: 20px;
             background-color: #f9fafb;
             border-radius: 8px;
@@ -147,49 +208,7 @@
 
         .chart-canvas {
             position: relative;
-            height: 250px;
-        }
-
-        .total-sales-section {
-            background-color: #f9fafb;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 30px;
-        }
-
-        .total-sales-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 16px;
-        }
-
-        .total-sales-item {
-            background: white;
-            padding: 16px;
-            border-radius: 6px;
-            text-align: center;
-        }
-
-        .total-sales-item.highlight {
-            background-color: #dbeafe;
-            border: 2px solid #2563eb;
-        }
-
-        .total-sales-label {
-            font-size: 13px;
-            color: #6b7280;
-            font-weight: 500;
-            margin-bottom: 8px;
-        }
-
-        .total-sales-value {
-            font-size: 20px;
-            color: #1f2937;
-            font-weight: 700;
-        }
-
-        .total-sales-item.highlight .total-sales-value {
-            color: #2563eb;
+            height: 300px;
         }
 
         .action-buttons {
@@ -210,12 +229,12 @@
         }
 
         .back-button {
-            background-color: #10b981;
+            background-color: #6b7280;
             color: white;
         }
 
         .back-button:hover {
-            background-color: #059669;
+            background-color: #4b5563;
         }
 
         .print-button {
@@ -227,6 +246,10 @@
             background-color: #059669;
         }
 
+        .page-break {
+            page-break-after: always;
+        }
+
         @media print {
             body {
                 background: white;
@@ -236,10 +259,15 @@
             .print-container {
                 border: none;
                 padding: 20px;
+                max-width: 100%;
             }
 
             .action-buttons {
                 display: none;
+            }
+
+            .chart-canvas {
+                height: 250px;
             }
         }
 
@@ -257,8 +285,13 @@
                 text-align: left;
             }
 
-            .total-sales-grid {
+            .summary-cards {
                 grid-template-columns: 1fr;
+            }
+
+            /* Stack charts on mobile */
+            .section div[style*="grid-template-columns: 1fr 1fr"] {
+                grid-template-columns: 1fr !important;
             }
         }
     </style>
@@ -268,8 +301,7 @@
         <!-- Header -->
         <div class="print-header">
             <div class="company-info">
-                <h1>REPORT</h1>
-                <p><strong>Report</strong></p>
+                <h1>{% if report_type == 'sales' %}SALES REPORT{% elif report_type == 'product' %}PRODUCT REPORT{% elif report_type == 'sales_report' %}SALES REPORT{% elif report_type == 'profit_revenue_report' %}PROFIT & REVENUE REPORT{% elif report_type == 'best_selling_report' %}BEST SELLING PRODUCT REPORT{% elif report_type == 'low_stock_report' %}LOW STOCK PRODUCT REPORT{% else %}OVERALL REPORT{% endif %}</h1>
                 <p><strong>SmartRetail Solutions Sdn Bhd</strong></p>
                 <p>Menara Exchange, 106, Lingkaran TRX,</p>
                 <p>Level 29, 55188 Kuala Lumpur,</p>
@@ -296,94 +328,491 @@
             </div>
         </div>
 
-        <!-- Best Selling Product -->
-        <div class="section">
-            <h3 class="section-title">Best selling product</h3>
-            {% if best_products %}
-            <table class="print-table">
-                <thead>
-                    <tr>
-                        <th>Product</th>
-                        <th>Product ID</th>
-                        <th>Category</th>
-                        <th style="text-align: right;">Total sold</th>
-                        <th style="text-align: right;">Turn Over</th>
-                        <th style="text-align: right;">Increase By</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for product in best_products %}
-                    <tr>
-                        <td>{{ product.product_name }}</td>
-                        <td>{{ product.product_id }}</td>
-                        <td>{{ product.category }}</td>
-                        <td style="text-align: right;">{{ product.total_sold }}</td>
-                        <td style="text-align: right;">{{ product.turnover }}</td>
-                        <td style="text-align: right;" class="increase-green">{{ product.increase_by }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        <!-- Report Type Badge -->
+        <div class="report-type-badge">
+            {% if report_type == 'sales' %}
+                Overall Sales Report - Sales, Profit & Revenue
+            {% elif report_type == 'product' %}
+                Overall Product Report - Best Selling, Low Stock
+            {% elif report_type == 'sales_report' %}
+                Sales Report
+            {% elif report_type == 'profit_revenue_report' %}
+                Profit & Revenue Report
+            {% elif report_type == 'best_selling_report' %}
+                Best Selling Product Report
+            {% elif report_type == 'low_stock_report' %}
+                Low Stock Product Report
             {% else %}
-            <p style="color: #6b7280; text-align: center; padding: 20px;">No product data available</p>
+                Overall Report
             {% endif %}
         </div>
 
-        <!-- Profit & Revenue Chart -->
-        <div class="section">
-            <h3 class="section-title">Profit & Revenue</h3>
-            <div class="chart-container">
-                <div class="chart-canvas">
-                    <canvas id="printChart"></canvas>
+        <!-- ============================================ -->
+        <!-- SALES REPORT: Sales, Profit & Revenue -->
+        <!-- ============================================ -->
+        {% if report_type == 'sales' or report_type == 'overall' %}
+            
+            <!-- Summary Cards -->
+            <div class="summary-cards">
+                <div class="summary-card">
+                    <div class="summary-card-label">Today's Sales</div>
+                    <div class="summary-card-value">{{ total_today }}</div>
+                    <div class="summary-card-subtitle">Current day revenue</div>
+                </div>
+                <div class="summary-card blue">
+                    <div class="summary-card-label">This Week</div>
+                    <div class="summary-card-value">{{ total_week }}</div>
+                    <div class="summary-card-subtitle">7-day revenue</div>
+                </div>
+                <div class="summary-card orange">
+                    <div class="summary-card-label">This Month</div>
+                    <div class="summary-card-value">{{ total_month }}</div>
+                    <div class="summary-card-subtitle">30-day revenue</div>
                 </div>
             </div>
-        </div>
 
-        <!-- Best Selling Category -->
-        <div class="section">
-            <h3 class="section-title">Best selling category</h3>
-            {% if best_categories %}
-            <table class="print-table">
-                <thead>
-                    <tr>
-                        <th>Category</th>
-                        <th style="text-align: right;">Turn Over</th>
-                        <th style="text-align: right;">Increase By</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for category in best_categories %}
-                    <tr>
-                        <td>{{ category.category }}</td>
-                        <td style="text-align: right;">{{ category.turnover }}</td>
-                        <td style="text-align: right;" class="increase-green">{{ category.increase_by }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            {% else %}
-            <p style="color: #6b7280; text-align: center; padding: 20px;">No category data available</p>
-            {% endif %}
-        </div>
-
-        <!-- Total Sales -->
-        <div class="total-sales-section">
-            <h3 class="section-title">TOTAL SALE</h3>
-            <div class="total-sales-grid">
-                <div class="total-sales-item">
-                    <div class="total-sales-label">Today</div>
-                    <div class="total-sales-value">{{ total_today }}</div>
-                </div>
-                <div class="total-sales-item">
-                    <div class="total-sales-label">This week</div>
-                    <div class="total-sales-value">{{ total_week }}</div>
-                </div>
-                <div class="total-sales-item highlight">
-                    <div class="total-sales-label">This Month</div>
-                    <div class="total-sales-value">{{ total_month }}</div>
+            <!-- Chart -->
+            <div class="section">
+                <h3 class="section-title">Profit & Revenue Trend (7 Months)</h3>
+                <div class="chart-container">
+                    <div class="chart-canvas">
+                        <canvas id="salesChart"></canvas>
+                    </div>
                 </div>
             </div>
-        </div>
+
+            <!-- Table Breakdown -->
+            <div class="section">
+                <h3 class="section-title">Monthly Breakdown</h3>
+                <table class="print-table">
+                    <thead>
+                        <tr>
+                            <th>Month</th>
+                            <th style="text-align: right;">Revenue</th>
+                            <th style="text-align: right;">Profit (Est.)</th>
+                            <th style="text-align: right;">Growth</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for data in monthly_data %}
+                        <tr>
+                            <td>{{ data.month }}</td>
+                            <td style="text-align: right;">RM{{ data.revenue|floatformat:2 }}</td>
+                            <td style="text-align: right;">RM{{ data.profit|floatformat:2 }}</td>
+                            <td style="text-align: right;" class="{% if '-' in data.growth and data.growth != '-' %}quantity-red{% else %}increase-green{% endif %}">{{ data.growth }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+        {% endif %}
+
+        <!-- ============================================ -->
+        <!-- INDIVIDUAL SALES REPORT -->
+        <!-- ============================================ -->
+        {% if report_type == 'sales_report' %}
+            
+            <!-- Summary Cards -->
+            <div class="summary-cards">
+                <div class="summary-card">
+                    <div class="summary-card-label">Today's Sales</div>
+                    <div class="summary-card-value">{{ total_today }}</div>
+                    <div class="summary-card-subtitle">Current day revenue</div>
+                </div>
+                <div class="summary-card blue">
+                    <div class="summary-card-label">This Week</div>
+                    <div class="summary-card-value">{{ total_week }}</div>
+                    <div class="summary-card-subtitle">7-day revenue</div>
+                </div>
+                <div class="summary-card orange">
+                    <div class="summary-card-label">This Month</div>
+                    <div class="summary-card-value">{{ total_month }}</div>
+                    <div class="summary-card-subtitle">30-day revenue</div>
+                </div>
+            </div>
+
+            <!-- Chart -->
+            <div class="section">
+                <h3 class="section-title">Sales Trend (7 Months)</h3>
+                <div class="chart-container">
+                    <div class="chart-canvas">
+                        <canvas id="salesOnlyChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Table Breakdown -->
+            <div class="section">
+                <h3 class="section-title">Monthly Sales Breakdown</h3>
+                <table class="print-table">
+                    <thead>
+                        <tr>
+                            <th>Month</th>
+                            <th style="text-align: right;">Total Sales</th>
+                            <th style="text-align: right;">Growth Rate</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for data in monthly_data %}
+                        <tr>
+                            <td>{{ data.month }}</td>
+                            <td style="text-align: right;">RM{{ data.revenue|floatformat:2 }}</td>
+                            <td style="text-align: right;" class="{% if '-' in data.growth and data.growth != '-' %}quantity-red{% else %}increase-green{% endif %}">{{ data.growth }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+        {% endif %}
+
+        <!-- ============================================ -->
+        <!-- PROFIT & REVENUE REPORT -->
+        <!-- ============================================ -->
+        {% if report_type == 'profit_revenue_report' %}
+            
+            <!-- Summary Cards -->
+            <div class="summary-cards">
+                <div class="summary-card">
+                    <div class="summary-card-label">Total Revenue</div>
+                    <div class="summary-card-value">{{ total_month }}</div>
+                    <div class="summary-card-subtitle">This month</div>
+                </div>
+                <div class="summary-card blue">
+                    <div class="summary-card-label">Estimated Profit</div>
+                    <div class="summary-card-value">RM{% widthratio total_month|cut:"RM"|cut:"," 7 10 %}</div>
+                    <div class="summary-card-subtitle">70% profit margin</div>
+                </div>
+                <div class="summary-card orange">
+                    <div class="summary-card-label">Average/Day</div>
+                    <div class="summary-card-value">RM{% widthratio total_month|cut:"RM"|cut:"," 1 30 %}</div>
+                    <div class="summary-card-subtitle">Based on 30 days</div>
+                </div>
+            </div>
+
+            <!-- Chart -->
+            <div class="section">
+                <h3 class="section-title">Profit & Revenue Analysis (7 Months)</h3>
+                <div class="chart-container">
+                    <div class="chart-canvas">
+                        <canvas id="profitRevenueChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Table Breakdown -->
+            <div class="section">
+                <h3 class="section-title">Profit & Revenue Breakdown</h3>
+                <table class="print-table">
+                    <thead>
+                        <tr>
+                            <th>Month</th>
+                            <th style="text-align: right;">Revenue</th>
+                            <th style="text-align: right;">Profit (Est.)</th>
+                            <th style="text-align: right;">Margin</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for data in monthly_data %}
+                        <tr>
+                            <td>{{ data.month }}</td>
+                            <td style="text-align: right;">RM{{ data.revenue|floatformat:2 }}</td>
+                            <td style="text-align: right;">RM{{ data.profit|floatformat:2 }}</td>
+                            <td style="text-align: right;" class="increase-green">{{ data.margin }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+        {% endif %}
+
+        <!-- ============================================ -->
+        <!-- PRODUCT REPORT: Best Selling & Low Stock -->
+        <!-- ============================================ -->
+        {% if report_type == 'product' or report_type == 'overall' %}
+
+            <!-- Summary Cards -->
+            <div class="summary-cards">
+                <div class="summary-card">
+                    <div class="summary-card-label">Best Selling Products</div>
+                    <div class="summary-card-value">{{ best_products|length }}</div>
+                    <div class="summary-card-subtitle">Top performers this month</div>
+                </div>
+                <div class="summary-card red">
+                    <div class="summary-card-label">Low Stock Items</div>
+                    <div class="summary-card-value">{{ low_stock|length }}</div>
+                    <div class="summary-card-subtitle">Need restocking</div>
+                </div>
+                <div class="summary-card blue">
+                    <div class="summary-card-label">Top Categories</div>
+                    <div class="summary-card-value">{{ best_categories|length }}</div>
+                    <div class="summary-card-subtitle">Best selling categories</div>
+                </div>
+            </div>
+
+            <!-- Best Selling Product Chart -->
+            <div class="section">
+                <h3 class="section-title">Best Selling Products (Top 5)</h3>
+                <div class="chart-container">
+                    <div class="chart-canvas">
+                        <canvas id="bestProductChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Best Selling Products Table -->
+            <div class="section">
+                <h3 class="section-title">Best Selling Products Breakdown</h3>
+                {% if best_products %}
+                <table class="print-table">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Product ID</th>
+                            <th>Category</th>
+                            <th style="text-align: right;">Total Sold</th>
+                            <th style="text-align: right;">Turnover</th>
+                            <th style="text-align: right;">Growth</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in best_products %}
+                        <tr>
+                            <td>{{ product.product_name }}</td>
+                            <td>{{ product.product_id }}</td>
+                            <td>{{ product.category }}</td>
+                            <td style="text-align: right;">{{ product.total_sold }}</td>
+                            <td style="text-align: right;">{{ product.turnover }}</td>
+                            <td style="text-align: right;" class="increase-green">{{ product.increase_by }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p style="color: #6b7280; text-align: center; padding: 20px;">No product data available</p>
+                {% endif %}
+            </div>
+
+            <!-- Low Stock Table -->
+            <div class="section">
+                <h3 class="section-title">Low Stock Products</h3>
+                {% if low_stock %}
+                <table class="print-table">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th style="text-align: right;">Current / Threshold</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in low_stock %}
+                        <tr>
+                            <td>{{ item.product_name }}</td>
+                            <td style="text-align: right;" class="quantity-red">{{ item.quantity }}</td>
+                            <td><span class="quantity-red">⚠️ Low Stock</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p style="color: #6b7280; text-align: center; padding: 20px;">No low stock products</p>
+                {% endif %}
+            </div>
+
+        {% endif %}
+
+        <!-- ============================================ -->
+        <!-- BEST SELLING PRODUCT REPORT -->
+        <!-- ============================================ -->
+        {% if report_type == 'best_selling_report' %}
+
+            <!-- Summary Cards -->
+            <div class="summary-cards">
+                <div class="summary-card">
+                    <div class="summary-card-label">Best Selling Products</div>
+                    <div class="summary-card-value">{{ best_products|length }}</div>
+                    <div class="summary-card-subtitle">Top performers</div>
+                </div>
+                <div class="summary-card blue">
+                    <div class="summary-card-label">Total Turnover</div>
+                    <div class="summary-card-value">{{ total_month }}</div>
+                    <div class="summary-card-subtitle">From best sellers</div>
+                </div>
+                <div class="summary-card orange">
+                    <div class="summary-card-label">Top Categories</div>
+                    <div class="summary-card-value">{{ best_categories|length }}</div>
+                    <div class="summary-card-subtitle">Best categories</div>
+                </div>
+            </div>
+
+            <!-- Charts Side by Side -->
+            <div class="section">
+                <h3 class="section-title">Sales Performance Overview</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                    <!-- Product Chart -->
+                    <div class="chart-container" style="margin: 0;">
+                        <h4 style="font-size: 14px; font-weight: 600; color: #1f2937; margin-bottom: 12px; text-align: center;">Best Selling Products (Top 5)</h4>
+                        <div class="chart-canvas" style="height: 280px;">
+                            <canvas id="bestSellingChart"></canvas>
+                        </div>
+                    </div>
+                    <!-- Category Chart -->
+                    <div class="chart-container" style="margin: 0;">
+                        <h4 style="font-size: 14px; font-weight: 600; color: #1f2937; margin-bottom: 12px; text-align: center;">Sales by Category</h4>
+                        <div class="chart-canvas" style="height: 280px;">
+                            <canvas id="categoryBreakdownChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Table Breakdown -->
+            <div class="section">
+                <h3 class="section-title">Best Selling Products Breakdown</h3>
+                {% if best_products %}
+                <table class="print-table">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Product</th>
+                            <th>Product ID</th>
+                            <th>Category</th>
+                            <th style="text-align: right;">Total Sold</th>
+                            <th style="text-align: right;">Turnover</th>
+                            <th style="text-align: right;">Growth</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in best_products %}
+                        <tr>
+                            <td><strong>#{{ forloop.counter }}</strong></td>
+                            <td>{{ product.product_name }}</td>
+                            <td>{{ product.product_id }}</td>
+                            <td>{{ product.category }}</td>
+                            <td style="text-align: right;">{{ product.total_sold }}</td>
+                            <td style="text-align: right;">{{ product.turnover }}</td>
+                            <td style="text-align: right;" class="increase-green">{{ product.increase_by }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p style="color: #6b7280; text-align: center; padding: 20px;">No product data available</p>
+                {% endif %}
+            </div>
+
+            <!-- Category Breakdown Table -->
+            <div class="section">
+                <h3 class="section-title">Category Performance Breakdown</h3>
+                {% if best_categories %}
+                <table class="print-table">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Category</th>
+                            <th style="text-align: right;">Turnover</th>
+                            <th style="text-align: right;">Growth Rate</th>
+                            <th>Performance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for category in best_categories %}
+                        <tr>
+                            <td><strong>#{{ forloop.counter }}</strong></td>
+                            <td>{{ category.category }}</td>
+                            <td style="text-align: right;">{{ category.turnover }}</td>
+                            <td style="text-align: right;" class="{% if '-' in category.increase_by %}quantity-red{% else %}increase-green{% endif %}">{{ category.increase_by }}</td>
+                            <td>
+                                {% if '-' in category.increase_by %}
+                                    <span style="color: #ef4444; font-weight: 500;">Low</span>
+                                {% elif forloop.counter == 1 %}
+                                    <span style="color: #10b981; font-weight: 600;">⭐ Top Performer</span>
+                                {% elif forloop.counter <= 3 %}
+                                    <span style="color: #3b82f6; font-weight: 500;">Strong</span>
+                                {% else %}
+                                    <span style="color: #6b7280;">Good</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p style="color: #6b7280; text-align: center; padding: 20px;">No category data available</p>
+                {% endif %}
+            </div>
+
+        {% endif %}
+
+        <!-- ============================================ -->
+        <!-- LOW STOCK PRODUCT REPORT -->
+        <!-- ============================================ -->
+        {% if report_type == 'low_stock_report' %}
+
+            <!-- Summary Cards -->
+            <div class="summary-cards">
+                <div class="summary-card red">
+                    <div class="summary-card-label">Low Stock Items</div>
+                    <div class="summary-card-value">{{ low_stock|length }}</div>
+                    <div class="summary-card-subtitle">Need immediate attention</div>
+                </div>
+                <div class="summary-card orange">
+                    <div class="summary-card-label">Critical Level</div>
+                    <div class="summary-card-value">{{ low_stock|length|add:"-1" }}</div>
+                    <div class="summary-card-subtitle">Below threshold</div>
+                </div>
+                <div class="summary-card blue">
+                    <div class="summary-card-label">Restock Priority</div>
+                    <div class="summary-card-value">High</div>
+                    <div class="summary-card-subtitle">Action required</div>
+                </div>
+            </div>
+
+            <!-- Chart -->
+            <div class="section">
+                <h3 class="section-title">Low Stock Products - Current Levels</h3>
+                <div class="chart-container">
+                    <div class="chart-canvas">
+                        <canvas id="lowStockChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Table Breakdown -->
+            <div class="section">
+                <h3 class="section-title">Low Stock Products Breakdown</h3>
+                {% if low_stock %}
+                <table class="print-table">
+                    <thead>
+                        <tr>
+                            <th>Priority</th>
+                            <th>Product</th>
+                            <th style="text-align: right;">Current / Threshold</th>
+                            <th>Status</th>
+                            <th>Action Required</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in low_stock %}
+                        <tr>
+                            <td><strong class="quantity-red">P{{ forloop.counter }}</strong></td>
+                            <td>{{ item.product_name }}</td>
+                            <td style="text-align: right;" class="quantity-red">{{ item.quantity }}</td>
+                            <td><span class="quantity-red">⚠️ Critical</span></td>
+                            <td>Restock Immediately</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p style="color: #6b7280; text-align: center; padding: 20px;">No low stock products</p>
+                {% endif %}
+            </div>
+
+        {% endif %}
 
         <!-- Action Buttons -->
         <div class="action-buttons">
@@ -393,88 +822,280 @@
     </div>
 
     <script>
-        // Chart.js configuration for print view
-        const ctx = document.getElementById('printChart').getContext('2d');
+        const reportType = '{{ report_type }}';
+        const chartData = {{ chart_data_json|safe }};
         
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: {{ chart_data.labels|safe }},
-                datasets: [
-                    {
-                        label: 'Revenue',
-                        data: {{ chart_data.revenue|safe }},
-                        borderColor: '#3b82f6',
-                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                        tension: 0.4,
-                        fill: true,
-                        pointRadius: 3,
-                        pointHoverRadius: 5
-                    },
-                    {
-                        label: 'Profit',
-                        data: {{ chart_data.profit|safe }},
-                        borderColor: '#f59e0b',
-                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
-                        tension: 0.4,
-                        fill: true,
-                        pointRadius: 3,
-                        pointHoverRadius: 5
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            usePointStyle: true,
-                            padding: 15,
-                            font: {
-                                size: 11
-                            }
+        // Sales Report Charts
+        if (reportType === 'sales' || reportType === 'overall') {
+            const ctx = document.getElementById('salesChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: chartData.labels,
+                    datasets: [
+                        {
+                            label: 'Revenue',
+                            data: chartData.revenue,
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: 'Profit',
+                            data: chartData.profit,
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            tension: 0.4,
+                            fill: true
                         }
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                let label = context.dataset.label || '';
-                                if (label) {
-                                    label += ': ';
-                                }
-                                label += 'RM' + context.parsed.y.toLocaleString('en-MY', {
-                                    minimumFractionDigits: 2,
-                                    maximumFractionDigits: 2
-                                });
-                                return label;
-                            }
-                        }
-                    }
+                    ]
                 },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: function(value) {
-                                return 'RM' + value.toLocaleString('en-MY');
-                            },
-                            font: {
-                                size: 10
-                            }
-                        }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
                     },
-                    x: {
-                        ticks: {
-                            font: {
-                                size: 10
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: value => 'RM' + value.toLocaleString('en-MY')
                             }
                         }
                     }
                 }
-            }
-        });
+            });
+        }
+
+        // Sales Only Report Chart
+        if (reportType === 'sales_report') {
+            const ctx = document.getElementById('salesOnlyChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: chartData.labels,
+                    datasets: [{
+                        label: 'Sales',
+                        data: chartData.revenue,
+                        backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                        borderColor: '#10b981',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: value => 'RM' + value.toLocaleString('en-MY')
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Profit & Revenue Report Chart
+        if (reportType === 'profit_revenue_report') {
+            const ctx = document.getElementById('profitRevenueChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: chartData.labels,
+                    datasets: [
+                        {
+                            label: 'Revenue',
+                            data: chartData.revenue,
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: 'Profit',
+                            data: chartData.profit,
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.2)',
+                            tension: 0.4,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: value => 'RM' + value.toLocaleString('en-MY')
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Product Report Chart
+        if (reportType === 'product' || reportType === 'overall') {
+            const ctx = document.getElementById('bestProductChart').getContext('2d');
+            const productNames = [{% for p in best_products|slice:":5" %}'{{ p.product_name }}'{% if not forloop.last %},{% endif %}{% endfor %}];
+            const productSales = [{% for p in best_products|slice:":5" %}{{ p.turnover_raw|default:0 }}{% if not forloop.last %},{% endif %}{% endfor %}];
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: productNames,
+                    datasets: [{
+                        label: 'Turnover (RM)',
+                        data: productSales,
+                        backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                        borderColor: '#10b981',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: value => 'RM' + value.toLocaleString('en-MY')
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Best Selling Report Chart
+        if (reportType === 'best_selling_report') {
+            const ctx = document.getElementById('bestSellingChart').getContext('2d');
+            const productNames = [{% for p in best_products|slice:":5" %}'{{ p.product_name }}'{% if not forloop.last %},{% endif %}{% endfor %}];
+            const productSales = [{% for p in best_products|slice:":5" %}{{ p.turnover_raw|default:0 }}{% if not forloop.last %},{% endif %}{% endfor %}];
+            
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: productNames,
+                    datasets: [{
+                        label: 'Turnover',
+                        data: productSales,
+                        backgroundColor: [
+                            'rgba(16, 185, 129, 0.8)',
+                            'rgba(59, 130, 246, 0.8)',
+                            'rgba(245, 158, 11, 0.8)',
+                            'rgba(239, 68, 68, 0.8)',
+                            'rgba(139, 92, 246, 0.8)'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+
+            // Category Breakdown Chart
+            const ctx2 = document.getElementById('categoryBreakdownChart').getContext('2d');
+            const categoryNames = [{% for c in best_categories %}'{{ c.category|safe }}'{% if not forloop.last %},{% endif %}{% endfor %}];
+            const categoryTurnover = [{% for c in best_categories %}{{ c.turnover_raw|default:0 }}{% if not forloop.last %},{% endif %}{% endfor %}];
+            
+            new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: categoryNames,
+                    datasets: [{
+                        label: 'Turnover',
+                        data: categoryTurnover,
+                        backgroundColor: [
+                            'rgba(16, 185, 129, 0.8)',
+                            'rgba(59, 130, 246, 0.8)',
+                            'rgba(245, 158, 11, 0.8)',
+                            'rgba(139, 92, 246, 0.8)',
+                            'rgba(239, 68, 68, 0.8)'
+                        ],
+                        borderColor: [
+                            '#10b981',
+                            '#3b82f6',
+                            '#f59e0b',
+                            '#8b5cf6',
+                            '#ef4444'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { 
+                            position: 'bottom',
+                            labels: {
+                                padding: 10,
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Low Stock Report Chart
+        if (reportType === 'low_stock_report') {
+            const ctx = document.getElementById('lowStockChart').getContext('2d');
+            const productNames = [{% for item in low_stock %}'{{ item.product_name }}'{% if not forloop.last %},{% endif %}{% endfor %}];
+            const stockLevels = [{% for item in low_stock %}{{ item.current_stock|default:0 }}{% if not forloop.last %},{% endif %}{% endfor %}];
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: productNames,
+                    datasets: [{
+                        label: 'Current Stock Level',
+                        data: stockLevels,
+                        backgroundColor: 'rgba(239, 68, 68, 0.8)',
+                        borderColor: '#ef4444',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: value => value + ' units'
+                            }
+                        }
+                    }
+                }
+            });
+        }
     </script>
 </body>
 </html>
