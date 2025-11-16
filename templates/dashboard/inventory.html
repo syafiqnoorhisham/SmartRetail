@@ -105,11 +105,15 @@
                     </td>
                     <td class="stock-info">{{ product.current_stock }}/{{ product.max_stock }}</td>
                     <td>
-                        <span class="status-badge {{ product.status }}">
-                            {% if product.status == 'high_stock' %}High stock{% endif %}
-                            {% if product.status == 'low_stock' %}Low stock{% endif %}
-                            {% if product.status == 'completed' %}Completed{% endif %}
-                        </span>
+                        {% if product.status == 'out_of_stock' %}
+                            <span class="status-badge out-of-stock">Out of Stock</span>
+                        {% elif product.status == 'low_stock' %}
+                            <span class="status-badge low-stock">Low Stock</span>
+                        {% elif product.status == 'high_stock' %}
+                            <span class="status-badge high-stock">High Stock</span>
+                        {% else %}
+                            <span class="status-badge completed">Completed</span>
+                        {% endif %}
                     </td>
                     <td class="actions">
                         {% if permissions.manage_inventory %}
@@ -488,6 +492,36 @@
     border-radius: 12px;
     font-size: 12px;
     font-weight: 500;
+}
+
+/* Status Badges */
+.status-badge {
+    padding: 6px 14px;
+    border-radius: 14px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-block;
+    text-transform: capitalize;
+}
+
+.status-badge.out-of-stock {
+    background-color: #FFEBEE;
+    color: #C62828;
+}
+
+.status-badge.low-stock {
+    background-color: #FFEBEE;
+    color: #C62828;
+}
+
+.status-badge.high-stock {
+    background-color: #E8F5E9;
+    color: #2E7D32;
+}
+
+.status-badge.completed {
+    background-color: #E0F2F1;
+    color: #00897B;
 }
 
 /* No Results */
