@@ -29,26 +29,26 @@
             
             <nav class="nav-menu">
                 <a href="{% url 'dashboard' %}" class="nav-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
-                    <span class="icon">📊</span>
+                    
                     <span>Dashboard</span>
                 </a>
                 <a href="{% url 'sales' %}" class="nav-item {% if request.resolver_match.url_name == 'sales' %}active{% endif %}">
-                    <span class="icon">💰</span>
+                    
                     <span>Sales</span>
                 </a>
                 <a href="{% url 'inventory' %}" class="nav-item {% if request.resolver_match.url_name == 'inventory' %}active{% endif %}">
-                    <span class="icon">📦</span>
+                    
                     <span>Inventory</span>
                 </a>
                 {% if permissions.view_employees %}
                 <a href="{% url 'employees' %}" class="nav-item {% if request.resolver_match.url_name == 'employees' %}active{% endif %}">
-                    <span class="icon">👥</span>
+                    
                     <span>Employees</span>
                 </a>
                 {% endif %}
                 {% if permissions.view_reports %}
                 <a href="{% url 'report' %}" class="nav-item {% if request.resolver_match.url_name == 'report' %}active{% endif %}">
-                    <span class="icon">📈</span>
+        
                     <span>Report</span>
                 </a>
                 {% endif %}
@@ -56,7 +56,7 @@
             
             <div class="sidebar-footer">
                 <a href="{% url 'logout' %}" class="nav-item logout">
-                    <span class="icon">🚪</span>
+                    
                     <span>Log Out</span>
                 </a>
             </div>
