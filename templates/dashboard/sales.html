@@ -225,6 +225,27 @@
         font-size: 14px;
     }
 
+    .cart-item-remove {
+        width: 28px;
+        height: 28px;
+        border: 2px solid #f44336;
+        background: #fff;
+        border-radius: 4px;
+        font-size: 18px;
+        font-weight: bold;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #f44336;
+        transition: all 0.2s ease;
+    }
+
+    .cart-item-remove:hover {
+        background: #f44336;
+        color: #fff;
+    }
+
     .cart-summary {
         border-top: 2px solid #ccc;
         padding-top: 16px;
@@ -612,7 +633,7 @@
                         <td style="text-align: center;">
                             <div class="quantity-controls">
                                 <button class="btn-quantity" onclick="addToCart('{{ product.product_id }}', '{{ product.name }}', '{{ product.price }}',)">+</button>
-                                <button class="btn-quantity" onclick="removeFromCart('{{ product.product_id }}')">−</button>
+                               <!-- <button class="btn-quantity" onclick="removeFromCart('{{ product.product_id }}')">−</button>--> 
                             </div>
                         </td>
                     </tr>
@@ -800,6 +821,7 @@
                             <div class="cart-item-quantity">x${item.quantity}</div>
                         </div>
                         <div class="cart-item-price">RM ${(item.price * item.quantity).toFixed(2)}</div>
+                        <button class="cart-item-remove" onclick="removeFromCart('${productId}')" title="Remove from cart">−</button>
                     </div>
                 `;
             });
