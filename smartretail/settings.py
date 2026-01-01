@@ -128,9 +128,10 @@ SUPABASE_SERVICE_ROLE_KEY = os.getenv('SUPABASE_SERVICE_ROLE_KEY')  # Service ro
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 SESSION_COOKIE_AGE = 86400  # 24 hours
 
-# Email Configuration - SendGrid HTTP API (bypasses Railway SMTP restrictions)
-SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY', os.getenv('EMAIL_HOST_PASSWORD', ''))  # Use existing SendGrid key
+# Email Configuration - Brevo HTTP API (bypasses Railway SMTP restrictions)
+BREVO_API_KEY = os.getenv('BREVO_API_KEY', '')
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@smartretail.com')
+DEFAULT_FROM_NAME = os.getenv('DEFAULT_FROM_NAME', 'SmartRetail')
 APP_URL = os.getenv('APP_URL', 'http://localhost:8000')
 INVITATION_EXPIRY_HOURS = int(os.getenv('INVITATION_EXPIRY_HOURS', 48))
 
